@@ -1,0 +1,27 @@
+{% extends "web/base.html" %}
+{% block title %}Contact | Roundbelly's Pizza{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--red">
+  <div class="wrap">
+    <h1 class="pagehead__title">Contact us</h1>
+    <p class="pagehead__lede">Call <a href="tel:{{ site.phone }}">{{ site.phone }}</a>, email <a href="mailto:{{ site.email }}">{{ site.email }}</a>, or send a message here.</p>
+  </div>
+</section>
+<section class="wrap section narrow">
+  <form method="post" class="form" novalidate>
+    {% csrf_token %}
+    {% if form.errors %}<div class="alert" role="alert">Some details need a look. They're marked below.</div>{% endif %}
+    {% include "web/_field.html" with f=form.topic %}
+    {% include "web/_field.html" with f=form.name %}
+    <div class="row2">
+      {% include "web/_field.html" with f=form.email %}
+      {% include "web/_field.html" with f=form.phone %}
+    </div>
+    {% include "web/_field.html" with f=form.business %}
+    {% include "web/_field.html" with f=form.message %}
+    <div class="hp" aria-hidden="true">{{ form.website }}</div>
+    <button class="btn btn--red btn--big" type="submit">Send message</button>
+  </form>
+  <p class="fine">Planning a catered event? The <a href="{% url 'web:catering' %}#request">catering form</a> gets you a price right away.</p>
+</section>
+{% endblock %}

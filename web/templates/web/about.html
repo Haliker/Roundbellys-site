@@ -1,0 +1,16 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}About | Roundbelly's Pizza{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--red">
+  <div class="wrap">
+    <h1 class="pagehead__title">From one food truck to a whole kitchen</h1>
+  </div>
+</section>
+<figure class="photoband photoband--one"><img src="{% static 'web/img/photos/bus-lot.webp' %}" alt="The Roundbelly's Wood Fire Pizza Bus" width="1440" height="1440" loading="lazy"></figure>
+<section class="wrap section prose">
+  <p>Roundbelly's started in 2020 as a pizza truck in South Bend, moving around town with a menu that changed as often as the parking spot. People kept asking us to bring it to their parties, and then to their fundraisers.</p>
+  <p>Today the truck is the Bus, a red Blue Bird school bus with a wood-burning pizza oven inside, and it caters graduations, weddings and company events across Northern Indiana and Southern Michigan. Behind it is our own USDA-inspected kitchen, where we make the frozen pizzas that schools, teams and churches sell to raise money, and that local stores keep in their freezers.</p>
+  <p>Same recipes, same crew, whether it's coming off the Bus hot or out of your oven at home.</p>
+  <p><a class="btn btn--red" href="{% url 'web:contact' %}">Get in touch</a></p>
+</section>
+{% endblock %}

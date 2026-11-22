@@ -1,0 +1,34 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}Our pizza | Roundbelly's Pizza{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--red">
+  <div class="wrap">
+    <h1 class="pagehead__title">Our pizza</h1>
+    <p class="pagehead__lede">Seven recipes, made in our USDA-inspected kitchen in South Bend. Sizes are 10" and 12", plus a gluten-free 12" in every flavor.</p>
+  </div>
+</section>
+<section class="wrap section">
+  <ul class="menu">
+    {% for f in flavors %}
+    <li class="menu__item">
+      <img src="{% static 'web/img/'|add:f.slug|add:'.webp' %}" alt="{{ f.name }} pizza" width="300" height="300" loading="lazy">
+      <div>
+        <h2 class="menu__name">{{ f.name }}</h2>
+        <p>{{ f.ingredients }}</p>
+      </div>
+    </li>
+    {% endfor %}
+    <li class="menu__item menu__item--gf">
+      <img src="{% static 'web/img/gluten-free.png' %}" alt="" width="160" height="160" loading="lazy">
+      <div>
+        <h2 class="menu__name">Gluten-free</h2>
+        <p>Any of the seven on a gluten-free 12" crust.</p>
+      </div>
+    </li>
+  </ul>
+  <div class="callout">
+    <h2 class="h3">Where to get it</h2>
+    <p>Hot off the Bus at <a href="{% url 'web:events' %}">public events</a> and <a href="{% url 'web:catering' %}">catered parties</a>, frozen through a <a href="{% url 'web:fundraising' %}">school or team fundraiser</a>, or from <a href="{% url 'web:wholesale' %}">stores that carry us</a>.</p>
+  </div>
+</section>
+{% endblock %}

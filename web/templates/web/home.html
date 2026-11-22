@@ -1,0 +1,103 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}Roundbelly's Pizza | Wood-fired Pizza Bus catering and fundraiser pizza{% endblock %}
+{% block body_class %}page-home{% endblock %}
+{% block content %}
+<section class="hero">
+  <img class="hero__photo" src="{% static 'web/img/photos/bus-trees.webp' %}" alt="The red Roundbelly's Pizza Bus parked under the trees, lit up and serving" width="1024" height="1024" fetchpriority="high">
+  <div class="wrap hero__grid">
+    <div class="hero__copy">
+      <h1 class="hero__title">Wood-fired pizza, made right at your party.</h1>
+      <p class="hero__lede">The Roundbelly's Bus has a real wood-burning oven inside. We park at graduations, weddings and company events {{ site.service_area }} and keep pizza coming for your guests.</p>
+      <div class="hero__actions">
+        <a class="btn btn--yellow" href="{% url 'web:catering' %}#request">Get a catering quote</a>
+        <a class="btn btn--ghost" href="{% url 'web:fundraising' %}">Start a fundraiser</a>
+      </div>
+    </div>
+
+    <form class="ticket" id="quick" action="{% url 'web:catering' %}#request" method="get" aria-labelledby="ticket-h">
+      <div class="ticket__head">
+        <h2 id="ticket-h" class="ticket__title">Price your party</h2>
+        <p class="ticket__sub">Pick a style and slide to your guest count.</p>
+      </div>
+      <fieldset class="seg">
+        <legend class="sr">Serving style</legend>
+        <label><input type="radio" name="style" value="truck" checked><span>Food Truck<small>$15 a guest, unlimited pizza</small></span></label>
+        <label><input type="radio" name="style" value="buffet"><span>Buffet<small>$20 a guest, 5 pizzas</small></span></label>
+      </fieldset>
+      <label class="ticket__guests" for="qg">Guests <output id="qg-out" for="qg">100</output></label>
+      <input class="range" id="qg" type="range" name="guests" min="25" max="300" step="5" value="100">
+      <div class="ticket__total" aria-live="polite">
+        <span class="ticket__amount" id="q-total">$1,500</span>
+        <span class="ticket__plus">plus tax</span>
+      </div>
+      <p class="ticket__note" id="q-note"></p>
+      <p class="ticket__deposit" id="q-dep"></p>
+      <button class="btn btn--red btn--block" type="submit">Plan this party</button>
+    </form>
+  </div>
+</section>
+
+<section class="doors">
+  <a class="door door--bus" href="{% url 'web:catering' %}">
+    <img class="door__photo" src="{% static 'web/img/photos/deluxe-table.webp' %}" alt="" width="1440" height="960" loading="lazy">
+    <div class="door__body">
+      <h2 class="door__title">Book the Bus</h2>
+      <p>Food Truck or Buffet style for 50 to 300 guests. Add breadsticks, a salad bar, mini donuts or a cheesecake bar. Free tastings before you book.</p>
+      <span class="door__go">See catering and prices</span>
+    </div>
+  </a>
+  <a class="door door--dough" href="{% url 'web:fundraising' %}">
+    <div class="door__body">
+      <h2 class="door__title">{{ site.program_name }}</h2>
+      <p>Your school, team or club sells our take-and-bake pizzas for two weeks and keeps 40% of every sale. We deliver it all to one spot, already boxed by seller.</p>
+      <span class="door__go">See how fundraising works</span>
+    </div>
+  </a>
+</section>
+
+<section class="fire">
+  <img class="fire__photo" src="{% static 'web/img/photos/oven-two.webp' %}" alt="Two pizzas baking in the Bus's wood-fired oven" width="1600" height="1200" loading="lazy">
+  <div class="wrap fire__copy">
+    <h2 class="h2">There's a fire in that bus.</h2>
+    <p>A brick-floored, wood-burning oven rides inside the Bus. Pizzas bake in a few minutes right in front of your guests, with that crisp, charred edge you only get from real fire.</p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="band__head">
+      <h2 class="h2">Where the Bus will be</h2>
+      <a class="link" href="{% url 'web:events' %}">All events</a>
+    </div>
+    {% if events %}
+    <ol class="eventlist">
+      {% for e in events %}{% include "web/_event.html" %}{% endfor %}
+    </ol>
+    {% else %}
+    <p class="empty">Nothing public on the calendar right now. <a href="{% url 'web:catering' %}#request">Bring the Bus to your event</a> instead.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="pies" aria-labelledby="pies-h">
+  <div class="wrap">
+    <h2 class="h2" id="pies-h">Seven pizzas people ask for by name</h2>
+    <p class="pies__lede">Each one in 10" and 12", plus a gluten-free 12".</p>
+  </div>
+  <ul class="pies__row">
+    {% for f in flavors %}
+    <li class="pie"><img src="{% static 'web/img/'|add:f.slug|add:'.webp' %}" alt="" width="220" height="220" loading="lazy"><span class="pie__name">{{ f.name }}</span></li>
+    {% endfor %}
+  </ul>
+  <div class="wrap"><a class="link" href="{% url 'web:menu' %}">What's on each one</a></div>
+</section>
+
+<section class="kitchen">
+  <div class="wrap kitchen__grid">
+    <h2 class="h2">From one truck in 2020 to our own USDA-inspected kitchen.</h2>
+    <p>The same recipes go out on the Bus and into the frozen pizzas we make for fundraisers and local stores, from the same kitchen in South Bend and the same crew.</p>
+  </div>
+</section>
+{{ rules|json_script:"rules" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'web/js/estimate.js' %}"></script>{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "web/base.html" %}
+{% block title %}Wholesale | Roundbelly's frozen pizza{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--red">
+  <div class="wrap">
+    <h1 class="pagehead__title">Carry Roundbelly's in your freezer</h1>
+    <p class="pagehead__lede">Gas stations, markets, bars and cafes around Michiana sell our frozen pizzas. We deliver, and you can order the mix that sells for you.</p>
+  </div>
+</section>
+<section class="wrap section prose">
+  <h2 class="h3">What you can stock</h2>
+  <p>All seven flavors ({% for f in flavors %}{{ f.name }}{% if not forloop.last %}, {% endif %}{% endfor %}) in 10" and 12", plus gluten-free. Made and packed in our USDA-inspected kitchen in South Bend, each one labeled with its pack date.</p>
+  <h2 class="h3">How to start</h2>
+  <p>Tell us about your store and we'll set you up with pricing and a delivery day. Already a wholesale customer? Call or email your order as usual.</p>
+  <p><a class="btn btn--red" href="{% url 'web:contact' %}?topic=wholesale">Ask about wholesale</a></p>
+</section>
+{% endblock %}

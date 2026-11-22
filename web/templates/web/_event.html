@@ -1,0 +1,9 @@
+<li class="event">
+  <time class="event__date" datetime="{{ e.date|date:'Y-m-d' }}"><span class="event__mon">{{ e.date|date:"M" }}</span><span class="event__day">{{ e.date|date:"j" }}</span><span class="event__dow">{{ e.date|date:"D" }}</span></time>
+  <div class="event__body">
+    <h3 class="event__title">{% if e.link %}<a href="{{ e.link }}" rel="noopener">{{ e.title }}</a>{% else %}{{ e.title }}{% endif %}</h3>
+    <p class="event__meta">{{ e.start_time|time:"g:i A" }} to {{ e.end_time|time:"g:i A" }}{% if e.venue %}, {{ e.venue }}{% endif %}</p>
+    <p class="event__where"><a href="https://www.google.com/maps/search/?api=1&amp;query={{ e.address|urlencode }}" rel="noopener">{{ e.address }}</a></p>
+    {% if e.description %}<p class="event__desc">{{ e.description }}</p>{% endif %}
+  </div>
+</li>

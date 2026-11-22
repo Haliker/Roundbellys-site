@@ -1,0 +1,22 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}Events | Where the Roundbelly's Bus will be{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--red">
+  <div class="wrap">
+    <h1 class="pagehead__title">Where the Bus will be</h1>
+    <p class="pagehead__lede">Festivals, races and public cooks around Michiana. Come hungry.</p>
+  </div>
+</section>
+<figure class="photoband photoband--one"><img src="{% static 'web/img/photos/bus-fair.webp' %}" alt="The Roundbelly's Pizza Bus set up at a summer fair" width="1440" height="1080" loading="lazy"></figure>
+<section class="wrap section">
+  {% if events %}
+  <ol class="eventlist">{% for e in events %}{% include "web/_event.html" %}{% endfor %}</ol>
+  {% else %}
+  <p class="empty">No public cooks on the calendar right now. Check back soon, or <a href="{% url 'web:catering' %}#request">book the Bus for your own event</a>.</p>
+  {% endif %}
+  <div class="callout">
+    <h2 class="h3">Want the Bus at your festival, race or business?</h2>
+    <p>We do public cooks where your guests buy their own pizza. <a href="{% url 'web:contact' %}?topic=event">Tell us about your event</a>.</p>
+  </div>
+</section>
+{% endblock %}

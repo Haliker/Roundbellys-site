@@ -1,0 +1,12 @@
+{% extends "web/base.html" %}
+{% block title %}{{ title }} | Roundbelly's Pizza{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--red pagehead--tall">
+  <div class="wrap">
+    <h1 class="pagehead__title">{{ title }}</h1>
+    <p class="pagehead__lede">{{ text }}</p>
+    <p class="pagehead__lede">Need us sooner? Call <a href="tel:{{ site.phone }}">{{ site.phone }}</a>.</p>
+    <p><a class="btn btn--yellow" href="{% url 'web:home' %}">Back to the home page</a></p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}{{ site.program_name }} | Roundbelly's pizza fundraisers{% endblock %}
+{% block description %}Schools, teams and clubs sell Roundbelly's take-and-bake pizzas for two weeks and keep 40% of every sale. Northern Indiana and Southern Michigan.{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--yellow">
+  <div class="wrap pagehead__split">
+    <div>
+      <img class="badge" src="{% static 'web/img/fundraising-badge.webp' %}" alt="The round Roundbelly's Fundraising label that goes on every frozen pizza" width="180" height="180">
+      <h1 class="pagehead__title">{{ site.program_name }}</h1>
+      <p class="pagehead__lede">A pizza fundraiser that sells itself. Your group takes orders for two weeks, keeps {{ share }}% of every sale, and gets everything delivered to one spot, already boxed by seller.</p>
+      <a class="btn btn--red" href="#apply">Start a fundraiser</a>
+    </div>
+    <div class="calc" aria-labelledby="calc-h">
+      <h2 class="calc__title" id="calc-h">What could your group raise?</h2>
+      <label for="c-sellers">Sellers <output id="c-sellers-out" for="c-sellers">30</output></label>
+      <input class="range" id="c-sellers" type="range" min="5" max="200" step="5" value="30">
+      <label for="c-each">Pizzas each <output id="c-each-out" for="c-each">10</output></label>
+      <input class="range" id="c-each" type="range" min="2" max="40" step="1" value="10">
+      <p class="calc__result" aria-live="polite"><span id="c-total">$1,560</span> for your group</p>
+      <p class="calc__fine">At an average of ${{ avg }} a pizza. Your group keeps {{ share }}% of every sale.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap section">
+  <h2 class="h2">How it works</h2>
+  <ol class="steps">
+    <li><h3>Apply</h3><p>Tell us about your group below. We'll call to set your sale dates and delivery spot.</p></li>
+    <li><h3>Sell for two weeks</h3><p>Every seller gets a flyer with an order form. Buyers pay the seller by cash or check, or order online by card.</p></li>
+    <li><h3>We make the pizzas</h3><p>When the sale closes, we make every pizza fresh in our USDA-inspected kitchen. That takes one to two weeks, depending on how many you sold.</p></li>
+    <li><h3>We deliver, sorted by seller</h3><p>One drop-off at your school or meeting spot, boxed by seller so each kid can hand out their own orders.</p></li>
+    <li><h3>Settle up at delivery</h3><p>We total it up and bring a statement. Online orders are already credited to you, less the 3% card fee. If we owe you, the check comes with the pizzas.</p></li>
+  </ol>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2 class="h2">What your buyers can order</h2>
+    <p class="band__lede">Frozen, take-and-bake. Every flavor also comes gluten-free (12").</p>
+    <div class="tiers">
+      {% for key, t in tiers.items %}
+      <div class="tier">
+        <h3 class="tier__name">{{ t.name }}</h3>
+        <p class="tier__prices"><span>10" ${{ t.prices.0 }}</span><span>12" ${{ t.prices.1 }}</span><span>GF ${{ t.prices.2 }}</span></p>
+        <ul class="tier__list">{% for f in flavors %}{% if f.tier == key %}<li><img src="{% static 'web/img/'|add:f.slug|add:'.webp' %}" alt="" width="56" height="56" loading="lazy"><span><strong>{{ f.name }}</strong><br>{{ f.ingredients }}</span></li>{% endif %}{% endfor %}</ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="request" id="apply">
+  <div class="wrap narrow">
+    <form method="post" class="form" novalidate>
+      {% csrf_token %}
+      <h2 class="h2">Start a fundraiser</h2>
+      <p class="form__lede">We'll call within one business day to set your dates. There's no cost to apply.</p>
+      {% if form.errors %}<div class="alert" role="alert">Some details need a look. They're marked below.</div>{% endif %}
+      <div class="row2">
+        {% include "web/_field.html" with f=form.group %}
+        {% include "web/_field.html" with f=form.organization %}
+      </div>
+      {% include "web/_field.html" with f=form.name %}
+      <div class="row2">
+        {% include "web/_field.html" with f=form.phone %}
+        {% include "web/_field.html" with f=form.email %}
+      </div>
+      <div class="row2">
+        {% include "web/_field.html" with f=form.sellers %}
+        {% include "web/_field.html" with f=form.start_date %}
+      </div>
+      {% include "web/_field.html" with f=form.delivery_address %}
+      <div class="field">
+        <span class="field__label">Team colors <span class="opt">optional</span></span>
+        <p class="field__help">So we can match your sellers' flyers to your team.</p>
+        <div class="colors">{{ form.color1 }}{{ form.color2 }}</div>
+      </div>
+      {% include "web/_field.html" with f=form.message %}
+      <div class="hp" aria-hidden="true">{{ form.website }}</div>
+      <button class="btn btn--red btn--big" type="submit">Send my application</button>
+    </form>
+  </div>
+</section>
+<script id="fund" type="application/json">{"share": {{ share }}, "avg": {{ avg }}}</script>
+{% endblock %}
+{% block scripts %}<script src="{% static 'web/js/estimate.js' %}"></script>{% endblock %}

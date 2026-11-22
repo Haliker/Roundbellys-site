@@ -1,0 +1,128 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}Catering | Roundbelly's Pizza Bus{% endblock %}
+{% block description %}Pizza Bus catering for graduations, weddings and company events around South Bend. Food Truck style $15 a guest, Buffet $20 a guest. Get an instant estimate.{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--red">
+  <div class="wrap">
+    <h1 class="pagehead__title">Wood-fired catering from the Pizza Bus</h1>
+    <p class="pagehead__lede">We park, light the wood-burning oven inside the Bus, and keep pizza coming for your guests. You get a price right here, then we talk it through and set up a free tasting if you'd like one.</p>
+  </div>
+</section>
+
+<section class="wrap styles">
+  {% for key, s in styles.items %}
+  <article class="style">
+    <h2 class="style__name">{{ s.name }}</h2>
+    <p class="style__price"><strong>${{ s.rate|floatformat:0 }}</strong> a guest</p>
+    <p>{{ s.blurb }}</p>
+    <p class="style__facts">{{ s.hours }}-hour serving window. ${{ s.minimum|floatformat:"0g" }} minimum.</p>
+  </article>
+  {% endfor %}
+  <article class="style style--extras">
+    <h2 class="style__name">Add to either</h2>
+    <ul class="extras">
+      {% for key, a in addons.items %}<li><span>{{ a.name }}</span><span>${{ a.rate|floatformat:0 }} a guest</span></li>{% endfor %}
+      <li><span>Extra serving time</span><span>${{ extra_hour|floatformat:0 }} an hour</span></li>
+    </ul>
+    <p class="style__facts">Setup and cleanup never count against your serving time.</p>
+  </article>
+</section>
+
+<figure class="photoband"><img src="{% static 'web/img/photos/oven-four.webp' %}" alt="Pizzas baking beside the fire in the Bus's wood-burning oven" width="960" height="720" loading="lazy"><img src="{% static 'web/img/photos/deluxe-table.webp' %}" alt="A sliced Deluxe pizza served at a catered event" width="1440" height="960" loading="lazy"></figure>
+<section class="wrap need">
+  <div>
+    <h2 class="h3">What the Bus needs</h2>
+    <p>Hard, level ground with at least 40 feet to park safely. We bring our own power and water. We travel {{ site.service_area }}.</p>
+  </div>
+  <div>
+    <h2 class="h3">Free tastings</h2>
+    <p>Try the pizza before you book. Tastings are at {{ site.tasting_place }}, usually {{ site.tasting_days }}.</p>
+  </div>
+  <div>
+    <h2 class="h3">Holding your date</h2>
+    <p>25% down holds the date. The rest is due 7 days before your event. Prices are plus sales tax. Credit cards carry a 3% fee; debit cards and bank transfers don't.</p>
+  </div>
+</section>
+
+<section class="request" id="request">
+  <div class="wrap request__grid">
+    <form method="post" class="form" novalidate id="cform">
+      {% csrf_token %}
+      <h2 class="h2">Request your date</h2>
+      <p class="form__lede">Nothing is booked or charged when you send this. We'll call or email within one business day.</p>
+      {% if form.non_field_errors %}<div class="alert">{{ form.non_field_errors }}</div>{% endif %}
+      {% if form.errors %}<div class="alert" role="alert">Some details need a look. They're marked below.</div>{% endif %}
+
+      <fieldset class="group">
+        <legend>Your food</legend>
+        <div class="field">
+          <span class="field__label">Serving style</span>
+          <div class="choices choices--cards">
+            {% for r in form.style %}<label class="choice">{{ r.tag }}<span>{{ r.choice_label }}</span></label>{% endfor %}
+          </div>
+          {{ form.style.errors }}
+        </div>
+        <div class="row2">
+          {% include "web/_field.html" with f=form.guests %}
+          {% include "web/_field.html" with f=form.extra_hours %}
+        </div>
+        <div class="field">
+          <span class="field__label">Add-ons (per guest)</span>
+          <div class="choices">
+            {% for c in form.addons %}<label class="choice">{{ c.tag }}<span>{{ c.choice_label }}</span></label>{% endfor %}
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>Your event</legend>
+        <div class="row2">
+          {% include "web/_field.html" with f=form.event_type %}
+          {% include "web/_field.html" with f=form.event_date %}
+        </div>
+        <p class="datewarn" id="datewarn" hidden>We already have something on the calendar that day. Send your request anyway and we'll see what we can do.</p>
+        <div class="row2">
+          {% include "web/_field.html" with f=form.start_time %}
+          {% include "web/_field.html" with f=form.venue %}
+        </div>
+        {% include "web/_field.html" with f=form.address %}
+        <div class="field">
+          <span class="field__label">{{ form.venue_ok.label }}</span>
+          <div class="choices choices--inline">{% for r in form.venue_ok %}<label class="choice">{{ r.tag }}<span>{{ r.choice_label }}</span></label>{% endfor %}</div>
+          {{ form.venue_ok.errors }}
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>A little about you</legend>
+        <div class="field">
+          <span class="field__label">{{ form.had_pizza.label }}</span>
+          <div class="choices choices--inline">{% for r in form.had_pizza %}<label class="choice">{{ r.tag }}<span>{{ r.choice_label }}</span></label>{% endfor %}</div>
+          {{ form.had_pizza.errors }}
+        </div>
+        <label class="check">{{ form.wants_tasting }} <span>{{ form.wants_tasting.label }} ({{ site.tasting_days }} at {{ site.tasting_place }})</span></label>
+        <div id="tastingwhen">{% include "web/_field.html" with f=form.tasting_when %}</div>
+        {% include "web/_field.html" with f=form.name %}
+        <div class="row2">
+          {% include "web/_field.html" with f=form.phone %}
+          {% include "web/_field.html" with f=form.email %}
+        </div>
+        {% include "web/_field.html" with f=form.message %}
+        <div class="hp" aria-hidden="true">{{ form.website }}</div>
+      </fieldset>
+      <button class="btn btn--red btn--big" type="submit">Send my request</button>
+    </form>
+
+    <aside class="ticket ticket--side" aria-live="polite" aria-labelledby="est-h">
+      <div class="ticket__head"><h2 id="est-h" class="ticket__title">Your estimate</h2></div>
+      <dl class="ticket__lines" id="est-lines"></dl>
+      <div class="ticket__total"><span class="ticket__amount" id="est-total">$0</span><span class="ticket__plus">plus tax</span></div>
+      <p class="ticket__note" id="est-note"></p>
+      <ul class="ticket__sugs" id="est-sugs"></ul>
+      <p class="ticket__deposit" id="est-dep"></p>
+    </aside>
+  </div>
+</section>
+{{ rules|json_script:"rules" }}
+{% endblock %}
+{% block scripts %}<script>window.DATE_CHECK_URL="{% url 'web:date_check' %}";</script><script src="{% static 'web/js/estimate.js' %}"></script>{% endblock %}
