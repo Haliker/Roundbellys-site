@@ -163,3 +163,27 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.get_topic_display()}: {self.name}"
+
+
+class Testimonial(models.Model):
+    """Quotes from happy customers. Nothing shows until 'show' is ticked (get their OK first)."""
+    PAGES = [("fundraising", "Fundraising page"), ("catering", "Catering page"), ("home", "Home page")]
+    quote = models.TextField(help_text="Keep it short - one or two sentences, their exact words.")
+    name = models.CharField(max_length=100)
+    role = models.CharField(max_length=100, blank=True, help_text="e.g. Principal")
+    organization = models.CharField(max_length=120, blank=True, help_text="e.g. Middlebury Elementary School")
+    page = models.CharField(max_length=12, choices=PAGES, default="fundraising")
+    show = models.BooleanField("show on the website", default=False,
+                               help_text="Only tick this once they've said it's OK to use their words and name.")
+    permission_note = models.CharField(max_length=200, blank=True, help_text="Who said OK and when (office only).")
+    sort = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort", "id"]
+
+    def __str__(self):
+        return f"{self.name}: {self.quote[:50]}"
+
+    @property
+    def credit(self):
+        return ", ".join(x for x in [self.name, self.role, self.organization] if x)

@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.utils import timezone
 
-from .models import Booking, CateringRequest, ContactMessage, FundraiserInquiry, SiteSettings
+from .models import Booking, CateringRequest, ContactMessage, FundraiserInquiry, SiteSettings, Testimonial
 
 
 class UpcomingFilter(admin.SimpleListFilter):
@@ -109,3 +109,10 @@ class SiteSettingsAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Testimonial)
+class TestimonialAdmin(admin.ModelAdmin):
+    list_display = ["name", "organization", "page", "show", "quote"]
+    list_editable = ["show"]
+    list_filter = ["page", "show"]

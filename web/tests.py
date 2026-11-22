@@ -158,3 +158,17 @@ class PagesTest(TestCase):
     def test_office_needs_a_login(self):
         r = self.client.get("/office/")
         self.assertEqual(r.status_code, 302)
+
+
+class TestimonialTest(TestCase):
+    def test_quotes_only_show_once_ticked(self):
+        from .models import Testimonial
+        t = Testimonial.objects.get(organization="Middlebury Elementary School")
+        self.assertFalse(t.show)
+        self.assertNotContains(self.client.get(reverse("web:fundraising")), "without any hesitation")
+        t.show = True
+        t.save()
+        r = self.client.get(reverse("web:fundraising"))
+        self.assertContains(r, "without any hesitation")
+        self.assertContains(r, "Marion Hostetler, Principal, Middlebury Elementary School")
+        self.assertNotContains(self.client.get(reverse("web:catering")), "without any hesitation")

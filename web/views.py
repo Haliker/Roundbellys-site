@@ -10,7 +10,7 @@ from django.views.decorators.http import require_GET
 
 from . import content, pricing
 from .forms import CateringForm, ContactForm, FundraiserForm
-from .models import Booking
+from .models import Booking, Testimonial
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ def home(request):
         "events": Booking.upcoming_public()[:4],
         "flavors": content.flavors_with_prices(),
         "rules": pricing.as_json(),
+        "quotes": Testimonial.objects.filter(show=True, page="home"),
     })
 
 
@@ -63,6 +64,7 @@ def catering(request):
                ]).replace("\n\n\n", "\n\n"))
         return redirect("web:thanks", kind="catering")
     return render(request, "web/catering.html", {"form": form, "rules": pricing.as_json(), "styles": pricing.STYLES,
+                                                  "quotes": Testimonial.objects.filter(show=True, page="catering"),
                                                   "addons": pricing.ADDONS, "extra_hour": pricing.EXTRA_HOUR})
 
 
@@ -102,6 +104,7 @@ def fundraising(request):
     return render(request, "web/fundraising.html", {
         "form": form, "tiers": content.TIERS, "flavors": content.flavors_with_prices(),
         "share": int(content.TEAM_SHARE * 100), "avg": content.AVERAGE_PIZZA,
+        "quotes": Testimonial.objects.filter(show=True, page="fundraising"),
     })
 
 

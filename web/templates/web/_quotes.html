@@ -1,0 +1,12 @@
+{% if quotes %}
+<section class="quotes">
+  <div class="wrap">
+    {% for q in quotes %}
+    <figure class="quote">
+      <blockquote><p>{{ q.quote }}</p></blockquote>
+      <figcaption>{{ q.credit }}</figcaption>
+    </figure>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
