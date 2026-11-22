@@ -37,8 +37,9 @@ ADMIN_USERNAME / ADMIN_PASSWORD env vars). `render.yaml` = web service `roundbel
 - Old Wix paths /shop and /wholesale-shop redirect.
 
 ## Fundraising reward (Adam, Nov 22 2026)
-Each school gets a sales goal set with Roundbelly's; hitting it = the Pizza Bus comes and throws a pizza party (wood-fired
-on site). Done every year - Middlebury Elementary is on year 3 (party Nov 2026); principal Marion Hostetler wrote a
+NOT every group: only when a club/group's sale is big enough to make it make sense, Roundbelly's sets a party goal;
+hitting it = the Pizza Bus comes and throws a pizza party (wood-fired on site). Site copy says "bigger sales can earn".
+Done every year at e.g. - Middlebury Elementary is on year 3 (party Nov 2026); principal Marion Hostetler wrote a
 thank-you letter (Nov 18 2024; "best day ever", each student + staff got their own 10" pizza). It's the headline of the
 Fundraising page. Exact terms (goal amount, who qualifies) still to confirm with Adam. Testimonials model: quotes only
 show once "show" is ticked (permission first); Middlebury quote loaded hidden by migration 0003.
