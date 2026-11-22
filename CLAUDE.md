@@ -42,8 +42,10 @@ Archivo Black (display) + Bitter (body), self-hosted woff2 (OFL). The one bold e
 estimator (torn-paper top, tilted, hard yellow shadow). Buttons have hard offset shadows like sign lettering.
 Tagline "Never trust a skinny chef." (from the frozen-pizza fundraising label, `img/fundraising-badge.webp`).
 Navy & Gold is a FLYER option for team colors, not the site's look.
-Photos: `img/photos/` from Roundbelly's Facebook (Bus, oven, food). Photos showing children (toddler with mini donuts,
-school class, wrestling team) were left OUT until Adam confirms parents' OK.
+Photos: `img/photos/` from Roundbelly's Facebook (Bus, oven, food). team-bus = a local high school team at the Bus
+(the school posted it to Roundbelly's page itself; used on Fundraising, school not named). School-class photo (sent by
+a school after its fundraiser, with a thank-you card) is only 320 px - need a bigger copy. Toddler-with-mini-donuts
+photo NOT used until Adam confirms the parents' OK.
 
 ## Plan (stages)
 1. DONE (Nov 22 2026): public site - home, catering + instant estimate + request form, events, our pizza,

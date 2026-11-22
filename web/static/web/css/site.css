@@ -278,6 +278,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--ink); outline: 3
 .tier__list img { width: 56px; height: 56px; flex: none; }
 @media (max-width: 860px) { .tiers { grid-template-columns: 1fr; } }
 
+.teamphoto { margin: 0; background: var(--ink); color: #fff; }
+.teamphoto img { width: 100%; height: clamp(260px, 42vw, 560px); object-fit: cover; object-position: center 60%; }
+.teamphoto figcaption { padding-block: 1rem; font-weight: 600; color: #f2ebe6; }
+
 /* Menu */
 .menu { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem 2.5rem; }
 .menu__item { display: grid; grid-template-columns: 150px 1fr; gap: 1.25rem; align-items: center; }
