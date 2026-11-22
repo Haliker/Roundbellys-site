@@ -7,7 +7,7 @@
     <div>
       <img class="badge" src="{% static 'web/img/fundraising-badge.webp' %}" alt="The round Roundbelly's Fundraising label that goes on every frozen pizza" width="180" height="180">
       <h1 class="pagehead__title">{{ site.program_name }}</h1>
-      <p class="pagehead__lede">A pizza fundraiser that sells itself. Your group takes orders for two weeks, keeps {{ share }}% of every sale, and gets everything delivered to one spot, already boxed by seller.</p>
+      <p class="pagehead__lede">Your group sells our take-and-bake pizzas for two weeks and keeps {{ share }}% of every sale. Hit the goal we set together, and the Pizza Bus comes to your school for a party.</p>
       <a class="btn btn--red" href="#apply">Start a fundraiser</a>
     </div>
     <div class="calc" aria-labelledby="calc-h">
@@ -30,7 +30,17 @@
     <li><h3>We make the pizzas</h3><p>When the sale closes, we make every pizza fresh in our USDA-inspected kitchen. That takes one to two weeks, depending on how many you sold.</p></li>
     <li><h3>We deliver, sorted by seller</h3><p>One drop-off at your school or meeting spot, boxed by seller so each kid can hand out their own orders.</p></li>
     <li><h3>Settle up at delivery</h3><p>We total it up and bring a statement. Online orders are already credited to you, less the 3% card fee. If we owe you, the check comes with the pizzas.</p></li>
+    <li><h3>Celebrate</h3><p>Hit your goal and the Bus rolls up for your pizza party, wood-fired on the spot.</p></li>
   </ol>
+</section>
+
+<section class="reward">
+  <img class="reward__photo" src="{% static 'web/img/photos/oven-glow.webp' %}" alt="A pizza baking in front of the fire in the Bus's wood-fired oven" width="1440" height="840" loading="lazy">
+  <div class="wrap reward__copy">
+    <h2 class="reward__title">Hit your goal. We bring the Bus.</h2>
+    <p>Before your sale starts, we set a goal with you. Reach it, and we park the Pizza Bus at your school and fire up the wood oven for a pizza party, cooked right there for your kids and staff.</p>
+    <p>Schools come back to do it year after year.</p>
+  </div>
 </section>
 
 {% include "web/_quotes.html" %}

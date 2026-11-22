@@ -36,6 +36,13 @@ ADMIN_USERNAME / ADMIN_PASSWORD env vars). `render.yaml` = web service `roundbel
   SMTP env vars (EMAIL_HOST etc.); without them it logs to the console (request is saved either way).
 - Old Wix paths /shop and /wholesale-shop redirect.
 
+## Fundraising reward (Adam, Nov 22 2026)
+Each school gets a sales goal set with Roundbelly's; hitting it = the Pizza Bus comes and throws a pizza party (wood-fired
+on site). Done every year - Middlebury Elementary is on year 3 (party Nov 2026); principal Marion Hostetler wrote a
+thank-you letter (Nov 18 2024; "best day ever", each student + staff got their own 10" pizza). It's the headline of the
+Fundraising page. Exact terms (goal amount, who qualifies) still to confirm with Adam. Testimonials model: quotes only
+show once "show" is ticked (permission first); Middlebury quote loaded hidden by migration 0003.
+
 ## Design
 Colors from the Bus: bus red #a3281c, school-bus yellow #f6b400, ember #ff7a1a, ink #1b1714, soot #241a15. Fonts:
 Archivo Black (display) + Bitter (body), self-hosted woff2 (OFL). The one bold element = the "order ticket" price
