@@ -1,0 +1,75 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}{{ seller.display }}'s seller page | {{ f.group }}{% endblock %}
+{% block content %}
+{% include "web/fr/_demo.html" %}
+<section class="frhead" style="--team1: {{ f.color1 }}; --team2: {{ f.color2 }}; --teamink: {{ f.ink_on_color1 }};">
+  <div class="wrap frhead__row">
+    <div>
+      <p class="frhead__kicker">Seller page</p>
+      <h1 class="frhead__title">{{ seller.display }}</h1>
+      <p class="frhead__group">{{ f.group }}. Orders close {{ f.sale_end|date:"F j" }}.</p>
+    </div>
+    <div class="frhead__meter">
+      <span class="meter"><span style="width: {{ pct }}%"></span></span>
+      <p><strong>{{ sold.pizzas }}</strong> of {{ seller.goal }} pizzas sold, ${{ sold.sales|floatformat:2 }}</p>
+    </div>
+  </div>
+</section>
+{% include "web/fr/_msgs.html" %}
+<section class="wrap section sellerpage">
+  <div class="cards3">
+    <div class="card">
+      <h2 class="h3">Share your order link</h2>
+      <p>Buyers order from you here, any time, on any phone.</p>
+      <p class="linkbox"><a href="{{ link }}">{{ link }}</a></p>
+      <div class="btnrow">
+        <button class="btn btn--yellow" type="button" data-copy="{{ link }}">Copy link</button>
+        <a class="btn" href="sms:?&body={{ share_text|urlencode }}">Text it</a>
+        <a class="btn" href="mailto:?subject={{ 'Pizza for '|add:f.group|urlencode }}&body={{ share_text|urlencode }}">Email it</a>
+      </div>
+    </div>
+    <div class="card card--qr">
+      <h2 class="h3">Your QR code</h2>
+      <div class="qrwrap">{{ qr }}</div>
+      <p>Anyone who scans this lands on your order page.</p>
+    </div>
+    <div class="card">
+      <h2 class="h3">Your flyer</h2>
+      <p>Print it to carry around. It has your name, your QR code, the menu, and an order form on the back for cash and check buyers.</p>
+      <a class="btn btn--red" href="{% url 'web:seller_flyer' seller.token %}">Download my flyer (PDF)</a>
+    </div>
+  </div>
+
+  <div class="band__head" id="orders">
+    <h2 class="h2">My orders</h2>
+    {% if f.taking_orders %}<a class="btn btn--red" href="{% url 'web:seller_log' seller.token %}">+ Add a cash or check order</a>{% endif %}
+  </div>
+  {% if owed %}<p class="owed">You still need to collect <strong>${{ owed|floatformat:2 }}</strong>.</p>{% endif %}
+  {% if orders %}
+  <ul class="orders">
+    {% for o in orders %}
+    <li class="ord{% if not o.collected %} ord--due{% endif %}">
+      <div class="ord__who"><strong>{{ o.buyer_name }}</strong>{% if o.buyer_phone %} <a href="tel:{{ o.buyer_phone }}">{{ o.buyer_phone }}</a>{% endif %}
+        <span class="ord__how">{% if o.how == "online" %}Ordered online{% else %}Entered by you{% endif %}, {{ o.created|date:"M j" }}</span></div>
+      <div class="ord__what">{% for l in o.lines.all %}{{ l.qty }} {{ l.flavor_name }} {{ l.get_size_display }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      <div class="ord__pay">
+        <strong>${{ o.total|floatformat:2 }}</strong>
+        {% if o.collected %}<span class="tag tag--ok">{% if o.payment == "card" %}Paid by card{% elif o.payment == "check" %}Check collected{% else %}Cash collected{% endif %}</span>
+        {% else %}<span class="tag tag--due">Not paid yet</span>{% endif %}
+        {% if o.payment != "card" %}
+        <form method="post" class="ord__form">{% csrf_token %}<input type="hidden" name="action" value="collected"><input type="hidden" name="order" value="{{ o.pk }}">
+          {% if o.collected %}<input type="hidden" name="value" value="0"><button class="linkbtn" type="submit">Undo</button>
+          {% else %}<input type="hidden" name="value" value="1"><button class="linkbtn" name="paid_with" value="cash" type="submit">Got cash</button><button class="linkbtn" name="paid_with" value="check" type="submit">Got a check</button>{% endif %}
+        </form>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">No orders yet. Share your link or hand out your flyer to get your first one.</p>
+  {% endif %}
+  <p class="fine">Keep this page bookmarked. It's private to you: don't share this page's address, share your order link above instead.</p>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'web/js/fr.js' %}"></script>{% endblock %}

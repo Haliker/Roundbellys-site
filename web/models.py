@@ -187,3 +187,160 @@ class Testimonial(models.Model):
     @property
     def credit(self):
         return ", ".join(x for x in [self.name, self.role, self.organization] if x)
+
+
+# ---------------------------------------------------------------- Fundraisers (Stage 3)
+import secrets
+from decimal import Decimal
+
+CODE_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no 0/O/1/I - easy to read off a flyer
+
+
+def new_code(n=5):
+    return "".join(secrets.choice(CODE_LETTERS) for _ in range(n))
+
+
+def new_token():
+    return secrets.token_urlsafe(18)
+
+
+class Fundraiser(models.Model):
+    """One group's sale. Coordinators manage it through a private link - no passwords to remember."""
+    SETUP, OPEN, CLOSED, DELIVERED = "setup", "open", "closed", "delivered"
+    STATUSES = [(SETUP, "Getting ready"), (OPEN, "Selling"), (CLOSED, "Sale closed - making pizzas"),
+                (DELIVERED, "Delivered and settled")]
+    status = models.CharField(max_length=10, choices=STATUSES, default=SETUP)
+    group = models.CharField("group or team", max_length=120)
+    organization = models.CharField("school / club / church", max_length=120, blank=True)
+    inquiry = models.ForeignKey("FundraiserInquiry", null=True, blank=True, on_delete=models.SET_NULL)
+    coordinator = models.CharField("coordinator name", max_length=100)
+    coordinator_email = models.EmailField()
+    coordinator_phone = models.CharField(max_length=30, blank=True)
+    sale_start = models.DateField()
+    sale_end = models.DateField(help_text="Last day to order.")
+    pickup_date = models.DateField(null=True, blank=True, help_text="When the pizzas get handed out (shows on flyers).")
+    pickup_time = models.CharField(max_length=60, blank=True, help_text="e.g. 3:00 - 5:00 PM")
+    pickup_place = models.CharField(max_length=160, blank=True, help_text="Where buyers get their pizzas (shows on flyers).")
+    delivery_address = models.CharField("where we deliver", max_length=200, blank=True)
+    party_goal = models.PositiveIntegerField("pizza party goal (pizzas)", null=True, blank=True,
+                                             help_text="Leave blank if this sale doesn't have a party goal.")
+    color1 = models.CharField("team color 1", max_length=7, default="#14284b")
+    color2 = models.CharField("team color 2", max_length=7, default="#f2a900")
+    join_code = models.CharField(max_length=8, unique=True, default=new_code)
+    token = models.CharField("coordinator link key", max_length=40, unique=True, default=new_token)
+    is_demo = models.BooleanField(default=False, help_text="Demo fundraisers show a DEMO banner and take no real money.")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-sale_start"]
+
+    def __str__(self):
+        return f"{self.group} ({self.sale_start:%b %Y})"
+
+    @property
+    def ink_on_color1(self):
+        """Black or white text, whichever reads better on team color 1."""
+        h = (self.color1 or "#14284b").lstrip("#")
+        try:
+            r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        except ValueError:
+            return "#ffffff"
+        lin = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4  # noqa: E731
+        lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+        return "#1b1714" if lum > 0.4 else "#ffffff"
+
+    @property
+    def taking_orders(self):
+        from django.utils import timezone
+        today = timezone.localdate()
+        return self.status in (self.SETUP, self.OPEN) and today <= self.sale_end
+
+    def lines(self):
+        return OrderLine.objects.filter(order__fundraiser=self)
+
+    def totals(self):
+        from django.db.models import Count, Sum
+        orders = self.orders.all()
+        agg = orders.aggregate(sales=Sum("total"), pizzas=Sum("pizzas"), n=Count("id"))
+        sales = agg["sales"] or Decimal("0")
+        card = orders.filter(payment=Order.CARD).aggregate(s=Sum("total"))["s"] or Decimal("0")
+        uncollected = orders.filter(collected=False).aggregate(s=Sum("total"))["s"] or Decimal("0")
+        share = (sales * Decimal("0.40")).quantize(Decimal("0.01"))
+        invoice = (sales * Decimal("0.60")).quantize(Decimal("0.01"))
+        credit = (card * Decimal("0.97")).quantize(Decimal("0.01"))
+        return {"sales": sales, "pizzas": agg["pizzas"] or 0, "orders": agg["n"], "card": card,
+                "cash_check": sales - card, "uncollected": uncollected, "share": share, "invoice": invoice,
+                "credit": credit, "balance": invoice - credit, "card_fee": card - credit,
+                "sellers": self.sellers.filter(active=True).count()}
+
+
+class Seller(models.Model):
+    """A kid (or adult) selling. Public pages show first name + last initial only."""
+    fundraiser = models.ForeignKey(Fundraiser, on_delete=models.CASCADE, related_name="sellers")
+    first_name = models.CharField(max_length=40)
+    last_initial = models.CharField(max_length=1, blank=True)
+    parent_name = models.CharField("parent / guardian", max_length=100, blank=True)
+    parent_email = models.EmailField(blank=True)
+    parent_phone = models.CharField(max_length=30, blank=True)
+    goal = models.PositiveSmallIntegerField("personal goal (pizzas)", default=10)
+    code = models.CharField(max_length=8, unique=True, default=new_code, help_text="In their public order link.")
+    token = models.CharField(max_length=40, unique=True, default=new_token, help_text="Their private seller page key.")
+    active = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["first_name", "last_initial"]
+
+    def __str__(self):
+        return self.display
+
+    @property
+    def display(self):
+        return f"{self.first_name} {self.last_initial}." if self.last_initial else self.first_name
+
+    def sold(self):
+        from django.db.models import Sum
+        a = self.orders.aggregate(p=Sum("pizzas"), s=Sum("total"))
+        return {"pizzas": a["p"] or 0, "sales": a["s"] or Decimal("0")}
+
+
+class Order(models.Model):
+    CASH, CHECK, CARD, LATER = "cash", "check", "card", "later"
+    PAYMENTS = [(CASH, "Cash to the seller"), (CHECK, "Check to the seller"), (CARD, "Card online"),
+                (LATER, "Will pay the seller")]
+    ONLINE, LOGGED = "online", "logged"
+    fundraiser = models.ForeignKey(Fundraiser, on_delete=models.CASCADE, related_name="orders")
+    seller = models.ForeignKey(Seller, on_delete=models.PROTECT, related_name="orders")
+    how = models.CharField(max_length=8, choices=[(ONLINE, "Buyer ordered online"), (LOGGED, "Seller entered it")], default=LOGGED)
+    buyer_name = models.CharField(max_length=100)
+    buyer_phone = models.CharField(max_length=30, blank=True)
+    buyer_email = models.EmailField(blank=True)
+    payment = models.CharField(max_length=6, choices=PAYMENTS, default=CASH)
+    collected = models.BooleanField("money collected", default=False)
+    pizzas = models.PositiveIntegerField(default=0)
+    total = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    note = models.CharField(max_length=200, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return f"{self.buyer_name} - {self.pizzas} pizzas (${self.total})"
+
+
+class OrderLine(models.Model):
+    SIZES = [("10", '10"'), ("12", '12"'), ("gf", 'Gluten-free 12"')]
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="lines")
+    flavor = models.CharField(max_length=20)
+    size = models.CharField(max_length=2, choices=SIZES)
+    qty = models.PositiveSmallIntegerField()
+    unit_price = models.DecimalField(max_digits=6, decimal_places=2)
+
+    class Meta:
+        ordering = ["id"]
+
+    @property
+    def flavor_name(self):
+        from .content import FLAVORS
+        return next((f["name"] for f in FLAVORS if f["slug"] == self.flavor), self.flavor)

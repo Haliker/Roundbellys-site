@@ -172,3 +172,129 @@ class TestimonialTest(TestCase):
         self.assertContains(r, "without any hesitation")
         self.assertContains(r, "Marion Hostetler, Principal, Middlebury Elementary School")
         self.assertNotContains(self.client.get(reverse("web:catering")), "without any hesitation")
+
+
+class FundraiserFlowTest(TestCase):
+    def setUp(self):
+        from .models import Fundraiser
+        today = timezone.localdate()
+        self.f = Fundraiser.objects.create(group="Test Tigers", coordinator="Coach", coordinator_email="c@example.com",
+                                           sale_start=today, sale_end=today + timedelta(days=10), status="open",
+                                           party_goal=100, color1="#000000", color2="#ff6a13")
+
+    def join(self, **over):
+        data = {"first_name": "jake", "last_initial": "s", "parent_name": "Amy Sullivan", "parent_email": "amy@example.com",
+                "parent_phone": "5745550110", "goal": "20", "website": ""}
+        data.update(over)
+        return self.client.post(reverse("web:join", args=[self.f.join_code.lower()]), data)
+
+    def test_family_signs_up_and_lands_on_their_seller_page(self):
+        r = self.join()
+        s = self.f.sellers.get()
+        self.assertRedirects(r, reverse("web:seller_home", args=[s.token]))
+        self.assertEqual((s.first_name, s.last_initial, s.parent_phone), ("Jake", "S", "574-555-0110"))
+        page = self.client.get(reverse("web:seller_home", args=[s.token]))
+        self.assertContains(page, reverse("web:order_page", args=[s.code]))
+        self.assertContains(page, "<svg")  # QR code
+
+    def test_buyer_orders_online_and_prices_come_from_the_server(self):
+        self.join()
+        s = self.f.sellers.get()
+        url = reverse("web:order_page", args=[s.code])
+        page = self.client.get(url)
+        self.assertContains(page, "Jake S.")
+        self.assertNotContains(page, "Sullivan")  # parent / last name never public
+        r = self.client.post(url, {"q_deluxe_gf": "2", "q_cheese_10": "1", "q_pepperoni_12": "abc",
+                                   "buyer_name": "Grandma", "buyer_phone": "", "buyer_email": "", "payment": "later",
+                                   "website": ""})
+        self.assertRedirects(r, reverse("web:order_thanks", args=[s.code]))
+        from .models import Order
+        o = Order.objects.get()
+        self.assertEqual((o.pizzas, o.total, o.how, o.collected), (3, D("42"), "online", False))
+        self.assertContains(self.client.get(reverse("web:order_thanks", args=[s.code])), "Grandma")
+        # someone else's browser can't see that order
+        from django.test import Client
+        self.assertNotContains(Client().get(reverse("web:order_thanks", args=[s.code])), "Grandma")
+
+    def test_card_only_offered_on_the_demo(self):
+        self.join()
+        s = self.f.sellers.get()
+        r = self.client.post(reverse("web:order_page", args=[s.code]), {
+            "q_cheese_10": "1", "buyer_name": "X", "payment": "card", "website": ""})
+        self.assertEqual(r.status_code, 200)  # refused: not a choice on a real sale yet
+
+    def test_empty_order_is_refused(self):
+        self.join()
+        s = self.f.sellers.get()
+        r = self.client.post(reverse("web:order_page", args=[s.code]), {"buyer_name": "X", "payment": "later", "website": ""})
+        self.assertContains(r, "Pick at least one pizza")
+
+    def test_seller_logs_cash_order_then_marks_later_one_paid(self):
+        from .models import Order
+        self.join()
+        s = self.f.sellers.get()
+        self.client.post(reverse("web:seller_log", args=[s.token]), {
+            "q_carnivore_12": "2", "buyer_name": "Uncle Dave", "payment": "later", "website": ""})
+        o = Order.objects.get()
+        self.assertFalse(o.collected)
+        self.client.post(reverse("web:seller_home", args=[s.token]),
+                         {"action": "collected", "order": o.pk, "value": "1", "paid_with": "check"})
+        o.refresh_from_db()
+        self.assertEqual((o.collected, o.payment), (True, "check"))
+
+    def test_coordinator_totals_and_settlement(self):
+        from .models import Order, OrderLine, Seller
+        s = Seller.objects.create(fundraiser=self.f, first_name="Ava")
+        for pay, total in [("card", 100), ("cash", 200), ("later", 50)]:
+            o = Order.objects.create(fundraiser=self.f, seller=s, buyer_name="b", payment=pay, total=total, pizzas=5,
+                                     collected=pay != "later")
+            OrderLine.objects.create(order=o, flavor="cheese", size="10", qty=5, unit_price=10)
+        t = self.f.totals()
+        self.assertEqual(t["sales"], D("350"))
+        self.assertEqual(t["share"], D("140.00"))
+        self.assertEqual(t["invoice"], D("210.00"))
+        self.assertEqual(t["credit"], D("97.00"))
+        self.assertEqual(t["balance"], D("113.00"))
+        self.assertEqual(t["uncollected"], D("50"))
+        page = self.client.get(reverse("web:coordinator", args=[self.f.token]))
+        self.assertContains(page, "$113.00")
+        self.assertContains(page, "15</strong> of 100")
+        packing = self.client.get(reverse("web:packing", args=[self.f.token]))
+        self.assertContains(packing, "Ava")
+        self.assertContains(packing, "15")
+
+    def test_coordinator_adds_sellers_and_downloads_flyers(self):
+        r = self.client.post(reverse("web:coordinator", args=[self.f.token]),
+                             {"action": "add_sellers", "names": "Jake Sullivan\nmaria lopez\n\n"})
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(sorted(s.display for s in self.f.sellers.all()), ["Jake S.", "Maria L."])
+        pdf = self.client.get(reverse("web:all_flyers", args=[self.f.token]))
+        self.assertEqual(pdf["Content-Type"], "application/pdf")
+        self.assertTrue(pdf.content.startswith(b"%PDF"))
+
+    def test_closed_sale_takes_no_orders_or_signups(self):
+        from .models import Order
+        self.join()
+        s = self.f.sellers.get()
+        self.f.status = "closed"
+        self.f.save()
+        self.assertContains(self.client.get(reverse("web:order_page", args=[s.code])), "This sale has ended")
+        self.client.post(reverse("web:order_page", args=[s.code]), {"q_cheese_10": "1", "buyer_name": "X", "payment": "later"})
+        self.assertFalse(Order.objects.exists())
+        self.join(first_name="Late")
+        self.assertEqual(self.f.sellers.count(), 1)
+
+    def test_wrong_links_are_not_found(self):
+        self.assertEqual(self.client.get(reverse("web:coordinator", args=["nope"])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("web:seller_home", args=["nope"])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("web:order_page", args=["ZZZZZ"])).status_code, 404)
+
+    def test_demo_command(self):
+        from django.core.management import call_command
+        from io import StringIO
+        from .models import Fundraiser
+        call_command("make_demo_fundraiser", stdout=StringIO())
+        call_command("make_demo_fundraiser", "--reset", stdout=StringIO())
+        demo = Fundraiser.objects.get(is_demo=True)
+        self.assertGreater(demo.totals()["pizzas"], 50)
+        self.assertContains(self.client.get(reverse("web:coordinator", args=[demo.token])), "Demo fundraiser")

@@ -1,0 +1,23 @@
+{% load static %}
+<div class="grid" data-grid>
+  {% if grid_error %}<p class="alert" role="alert">{{ grid_error }}</p>{% endif %}
+  {% for row in grid %}
+  <div class="pick">
+    <img class="pick__img" src="{% static 'web/img/'|add:row.slug|add:'.webp' %}" alt="" width="72" height="72" loading="lazy">
+    <div class="pick__name"><strong>{{ row.name }}</strong><span>{{ row.ingredients }}</span></div>
+    <div class="pick__sizes">
+      {% for c in row.cells %}
+      <label class="qty">
+        <span class="qty__label">{{ c.label }} <b>${{ c.price }}</b></span>
+        <span class="qty__box">
+          <button type="button" class="qty__btn" data-step="-1" aria-label="One less {{ c.label }} {{ row.name }}">&minus;</button>
+          <input type="number" inputmode="numeric" min="0" max="50" name="{{ c.name }}" data-price="{{ c.price }}" value="{% for k, v in posted.items %}{% if k == c.name %}{{ v }}{% endif %}{% endfor %}" placeholder="0" aria-label="{{ c.label }} {{ row.name }}">
+          <button type="button" class="qty__btn" data-step="1" aria-label="One more {{ c.label }} {{ row.name }}">+</button>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  <div class="grid__total" aria-live="polite"><span data-count>0 pizzas</span><strong data-sum>$0.00</strong></div>
+</div>

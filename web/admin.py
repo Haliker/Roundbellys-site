@@ -1,7 +1,12 @@
-from django.contrib import admin, messages
-from django.utils import timezone
+from datetime import timedelta
 
-from .models import Booking, CateringRequest, ContactMessage, FundraiserInquiry, SiteSettings, Testimonial
+from django.contrib import admin, messages
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.html import format_html
+
+from .models import (Booking, CateringRequest, ContactMessage, Fundraiser, FundraiserInquiry, Order, OrderLine, Seller,
+                     SiteSettings, Testimonial)
 
 
 class UpcomingFilter(admin.SimpleListFilter):
@@ -86,8 +91,28 @@ class CateringRequestAdmin(admin.ModelAdmin):
         return ", ".join(obj.addon_names) or "None"
 
 
+@admin.action(description="Set up a fundraiser from this application")
+def make_fundraiser(modeladmin, request, queryset):
+    made = []
+    for q in queryset:
+        if Fundraiser.objects.filter(inquiry=q).exists():
+            continue
+        start = q.start_date or timezone.localdate() + timedelta(days=7)
+        f = Fundraiser.objects.create(
+            inquiry=q, group=q.group, organization=q.organization, coordinator=q.name, coordinator_email=q.email,
+            coordinator_phone=q.phone, sale_start=start, sale_end=start + timedelta(days=13),
+            delivery_address=q.delivery_address, color1=q.color1 or "#14284b", color2=q.color2 or "#f2a900")
+        q.status = FundraiserInquiry.APPROVED
+        q.save(update_fields=["status"])
+        made.append(f)
+    if made:
+        messages.success(request, f"Set up {len(made)} fundraiser(s). Open each one to check the dates, then send the "
+                                  "coordinator their dashboard link.")
+
+
 @admin.register(FundraiserInquiry)
 class FundraiserInquiryAdmin(admin.ModelAdmin):
+    actions = [make_fundraiser]
     list_display = ["created", "group", "organization", "name", "phone", "sellers", "start_date", "status"]
     list_editable = ["status"]
     list_filter = ["status"]
@@ -116,3 +141,66 @@ class TestimonialAdmin(admin.ModelAdmin):
     list_display = ["name", "organization", "page", "show", "quote"]
     list_editable = ["show"]
     list_filter = ["page", "show"]
+
+
+class SellerInline(admin.TabularInline):
+    model = Seller
+    extra = 0
+    fields = ["first_name", "last_initial", "parent_name", "parent_email", "parent_phone", "goal", "active", "code"]
+    readonly_fields = ["code"]
+
+
+@admin.register(Fundraiser)
+class FundraiserAdmin(admin.ModelAdmin):
+    list_display = ["group", "organization", "status", "sale_start", "sale_end", "is_demo", "dashboard"]
+    list_filter = ["status", "is_demo"]
+    search_fields = ["group", "organization", "coordinator", "coordinator_email"]
+    inlines = [SellerInline]
+    readonly_fields = ["links", "money", "join_code", "created"]
+    fieldsets = [
+        ("Links to send", {"fields": ["links"]}),
+        ("Group", {"fields": ["status", "group", "organization", "is_demo", ("color1", "color2")]}),
+        ("Coordinator", {"fields": ["coordinator", "coordinator_email", "coordinator_phone"]}),
+        ("Dates and delivery", {"fields": [("sale_start", "sale_end"), ("pickup_date", "pickup_time"), "pickup_place",
+                                           "delivery_address", "party_goal"]}),
+        ("Totals so far", {"fields": ["money"]}),
+        ("Record", {"fields": ["join_code", "created"]}),
+    ]
+
+    @admin.display(description="dashboard")
+    def dashboard(self, obj):
+        return format_html('<a href="{}" target="_blank">Open</a>', reverse("web:coordinator", args=[obj.token]))
+
+    @admin.display(description="links")
+    def links(self, obj):
+        if not obj.pk:
+            return "Save first."
+        return format_html(
+            '<p><b>Coordinator dashboard</b> (send only to the coordinator - it is their private page):<br>'
+            '<a href="{0}" target="_blank">{0}</a></p><p><b>Seller sign-up link</b> (coordinator shares it with families):'
+            '<br><a href="{1}" target="_blank">{1}</a></p><p><a href="{2}" target="_blank">Packing sheet</a> &nbsp; '
+            '<a href="{3}" target="_blank">All flyers (PDF)</a></p>',
+            reverse("web:coordinator", args=[obj.token]), reverse("web:join", args=[obj.join_code]),
+            reverse("web:packing", args=[obj.token]), reverse("web:all_flyers", args=[obj.token]))
+
+    @admin.display(description="totals")
+    def money(self, obj):
+        if not obj.pk:
+            return "-"
+        t = obj.totals()
+        return format_html("{} pizzas, ${} sales. Team keeps ${}. Roundbelly's 60%: ${}; card orders credited ${}; "
+                           "balance at delivery ${}.", t["pizzas"], f"{t['sales']:,.2f}", f"{t['share']:,.2f}",
+                           f"{t['invoice']:,.2f}", f"{t['credit']:,.2f}", f"{t['balance']:,.2f}")
+
+
+class OrderLineInline(admin.TabularInline):
+    model = OrderLine
+    extra = 0
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ["created", "fundraiser", "seller", "buyer_name", "pizzas", "total", "payment", "collected", "how"]
+    list_filter = ["fundraiser", "payment", "collected", "how"]
+    search_fields = ["buyer_name", "buyer_phone", "buyer_email", "seller__first_name"]
+    inlines = [OrderLineInline]

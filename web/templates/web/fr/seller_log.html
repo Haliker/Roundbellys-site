@@ -1,0 +1,25 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}Add an order | {{ seller.display }}{% endblock %}
+{% block content %}
+{% include "web/fr/_demo.html" %}
+<section class="wrap section">
+  <p><a href="{% url 'web:seller_home' seller.token %}">&larr; Back to my seller page</a></p>
+  <h1 class="h2">Add a cash or check order</h1>
+  <p class="lede">For orders you took on paper or in person. Online orders show up on your page by themselves.</p>
+  {% if not f.taking_orders %}<div class="callout"><p>This sale has ended, so no new orders can be added.</p></div>{% else %}
+  <form method="post" novalidate class="orderform">
+    {% csrf_token %}
+    {% include "web/fr/_grid.html" %}
+    {% if form.errors %}<p class="alert" role="alert">Some details need a look. They're marked below.</p>{% endif %}
+    {% include "web/_field.html" with f=form.buyer_name %}
+    <div class="row2">{% include "web/_field.html" with f=form.buyer_phone %}{% include "web/_field.html" with f=form.buyer_email %}</div>
+    <div class="field"><span class="field__label">Payment</span>
+      <div class="choices choices--inline">{% for r in form.payment %}<label class="choice">{{ r.tag }}<span>{{ r.choice_label }}</span></label>{% endfor %}</div></div>
+    {% include "web/_field.html" with f=form.note %}
+    <div class="hp" aria-hidden="true">{{ form.website }}</div>
+    <button class="btn btn--red btn--big" type="submit">Save order</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'web/js/fr.js' %}"></script>{% endblock %}

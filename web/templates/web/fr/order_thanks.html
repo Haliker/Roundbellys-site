@@ -1,0 +1,18 @@
+{% extends "web/base.html" %}
+{% block title %}Thanks for your order | {{ f.group }}{% endblock %}
+{% block content %}
+{% include "web/fr/_demo.html" %}
+<section class="pagehead pagehead--red pagehead--tall">
+  <div class="wrap">
+    <h1 class="pagehead__title">Thank you{% if order %}, {{ order.buyer_name }}{% endif %}!</h1>
+    {% if order %}
+    <p class="pagehead__lede">Your order for {{ order.pizzas }} pizza{{ order.pizzas|pluralize }} (${{ order.total|floatformat:2 }}) is in with {{ seller.display }}.</p>
+    <ul class="receipt">{% for l in order.lines.all %}<li>{{ l.qty }} &times; {{ l.flavor_name }} {{ l.get_size_display }}</li>{% endfor %}</ul>
+    <p class="pagehead__lede">{% if order.payment == "card" %}Paid by card.{% else %}Pay {{ seller.first_name }} by cash or check when your pizzas arrive.{% endif %}{% if f.pickup_date %} Pizzas arrive {{ f.pickup_date|date:"l, F j" }}.{% endif %}</p>
+    {% else %}
+    <p class="pagehead__lede">Your order is in with {{ seller.display }}.</p>
+    {% endif %}
+    <p class="pagehead__lede">{{ f.group }} keeps 40% of every pizza. Thanks for supporting them.</p>
+  </div>
+</section>
+{% endblock %}

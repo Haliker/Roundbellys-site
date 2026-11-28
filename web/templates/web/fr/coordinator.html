@@ -1,0 +1,106 @@
+{% extends "web/base.html" %}{% load static %}
+{% block title %}{{ f.group }} fundraiser dashboard{% endblock %}
+{% block content %}
+{% include "web/fr/_demo.html" %}
+<section class="frhead" style="--team1: {{ f.color1 }}; --team2: {{ f.color2 }}; --teamink: {{ f.ink_on_color1 }};">
+  <div class="wrap frhead__row">
+    <div>
+      <p class="frhead__kicker">Coordinator dashboard</p>
+      <h1 class="frhead__title">{{ f.group }}</h1>
+      <p class="frhead__group">{{ f.get_status_display }}. Sale {{ f.sale_start|date:"M j" }} to {{ f.sale_end|date:"M j" }}{% if f.pickup_date %}, pickup {{ f.pickup_date|date:"M j" }}{% endif %}.</p>
+    </div>
+    {% if f.party_goal %}
+    <div class="frhead__meter">
+      <span class="meter"><span style="width: {{ goal_pct }}%"></span></span>
+      <p><strong>{{ t.pizzas }}</strong> of {{ f.party_goal }} pizzas toward your pizza party goal</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% include "web/fr/_msgs.html" %}
+<section class="wrap section">
+  <div class="stats">
+    <div class="stat"><span class="stat__n">{{ t.pizzas }}</span><span class="stat__l">pizzas sold</span></div>
+    <div class="stat"><span class="stat__n">${{ t.sales|floatformat:"0g" }}</span><span class="stat__l">in sales</span></div>
+    <div class="stat stat--big"><span class="stat__n">${{ t.share|floatformat:"0g" }}</span><span class="stat__l">for {{ f.group }} (40%)</span></div>
+    <div class="stat"><span class="stat__n">{{ t.sellers }}</span><span class="stat__l">sellers</span></div>
+  </div>
+
+  <div class="cards3">
+    <div class="card">
+      <h2 class="h3">Invite your sellers</h2>
+      <p>Send this link to parents (email, text, team app). Each family signs up their seller and gets their own order link and flyer.</p>
+      <p class="linkbox"><a href="{{ join_link }}">{{ join_link }}</a></p>
+      <button class="btn btn--yellow" type="button" data-copy="{{ join_link }}">Copy sign-up link</button>
+    </div>
+    <div class="card card--qr">
+      <h2 class="h3">Or put this QR code up</h2>
+      <div class="qrwrap">{{ join_qr }}</div>
+      <p>On a slide at practice, a handout or the classroom board.</p>
+    </div>
+    <div class="card">
+      <h2 class="h3">Print and pack</h2>
+      <p>Every seller's flyer in one PDF, and the packing sheet showing each seller's orders.</p>
+      <div class="btnrow"><a class="btn btn--red" href="{% url 'web:all_flyers' f.token %}">All flyers (PDF)</a>
+      <a class="btn" href="{% url 'web:packing' f.token %}">Packing sheet</a></div>
+    </div>
+  </div>
+
+  <div class="band__head"><h2 class="h2">Sellers</h2></div>
+  <div class="tablewrap">
+  <table class="tbl">
+    <thead><tr><th>Seller</th><th>Goal</th><th class="num">Pizzas</th><th class="num">Sales</th><th>Seller page</th></tr></thead>
+    <tbody>
+    {% for r in sellers %}
+      <tr><td><strong>{{ r.s.display }}</strong>{% if r.s.parent_name %}<br><span class="muted">{{ r.s.parent_name }}{% if r.s.parent_phone %}, {{ r.s.parent_phone }}{% endif %}</span>{% endif %}</td>
+      <td><span class="meter meter--sm"><span style="width: {{ r.pct }}%"></span></span><span class="muted">{{ r.s.goal }}</span></td>
+      <td class="num">{{ r.pizzas }}</td><td class="num">${{ r.sales|floatformat:"2g" }}</td>
+      <td><button class="linkbtn" type="button" data-copy="{{ request.scheme }}://{{ request.get_host }}{% url 'web:seller_home' r.s.token %}">Copy private link</button>
+      {% if not r.pizzas %}<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="seller_off"><input type="hidden" name="seller" value="{{ r.s.pk }}"><button class="linkbtn linkbtn--muted" type="submit">Remove</button></form>{% endif %}</td></tr>
+    {% empty %}
+      <tr><td colspan="5" class="empty">No sellers yet. Share the sign-up link, or add names below.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if f.taking_orders %}
+  <details class="addnames">
+    <summary>Add sellers yourself</summary>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="add_sellers">
+      <label class="field__label" for="names">One per line: first name and last name (we only keep the last initial)</label>
+      <textarea id="names" name="names" rows="5" placeholder="Jake Sullivan&#10;Maria Lopez"></textarea>
+      <button class="btn btn--red" type="submit">Add sellers</button>
+    </form>
+  </details>
+  {% endif %}
+
+  <div class="split2">
+    <div>
+      <h2 class="h2">Latest orders</h2>
+      <ul class="feed">{% for o in recent %}<li><strong>{{ o.buyer_name }}</strong> bought {{ o.pizzas }} from {{ o.seller.display }} <span class="muted">${{ o.total|floatformat:"2g" }}, {{ o.created|date:"M j" }}</span></li>{% empty %}<li class="empty">No orders yet.</li>{% endfor %}</ul>
+    </div>
+    <div class="settle">
+      <h2 class="h2">Settling up</h2>
+      <p class="muted">Where things stand if the sale ended today.</p>
+      <dl class="ticket__lines">
+        <dt>Total sales</dt><dd>${{ t.sales|floatformat:"2g" }}</dd>
+        <dt>Roundbelly's share (60%)</dt><dd>${{ t.invoice|floatformat:"2g" }}</dd>
+        <dt>Paid by card online</dt><dd>${{ t.card|floatformat:"2g" }}</dd>
+        <dt>Less the 3% card fee</dt><dd>&minus;${{ t.card_fee|floatformat:"2g" }}</dd>
+        <dt>Card money credited to you</dt><dd>&minus;${{ t.credit|floatformat:"2g" }}</dd>
+      </dl>
+      <p class="settle__bottom">{% if t.balance >= 0 %}Your group pays Roundbelly's <strong>${{ t.balance|floatformat:"2g" }}</strong> at delivery, out of the ${{ t.cash_check|floatformat:"2g" }} in cash and check orders your sellers collect.{% else %}Roundbelly's owes your group <strong>${{ t.balance|floatformat:2|cut:"-" }}</strong>. The check comes with your pizzas.{% endif %}</p>
+      {% if t.uncollected %}<p class="owed">Sellers still need to collect <strong>${{ t.uncollected|floatformat:"2g" }}</strong>.</p>{% endif %}
+      <p class="muted">Your group keeps ${{ t.share|floatformat:"2g" }} (40%), less ${{ t.card_fee|floatformat:"2g" }} in card fees.</p>
+    </div>
+  </div>
+
+  {% if f.status == "setup" %}
+  <form method="post" class="closebox">{% csrf_token %}<input type="hidden" name="action" value="open"><p>Ready to go? Opening the sale lets sellers start taking orders.</p><button class="btn btn--red" type="submit">Open the sale</button></form>
+  {% elif f.status == "open" %}
+  <form method="post" class="closebox">{% csrf_token %}<input type="hidden" name="action" value="close"><p>Orders close by themselves after {{ f.sale_end|date:"F j" }}. Done early? You can close the sale now.</p><button class="btn" type="submit">Close the sale now</button></form>
+  {% endif %}
+  <p class="fine">This page is private to you. Anyone with its address can see your sellers and orders, so don't post it publicly.</p>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'web/js/fr.js' %}"></script>{% endblock %}

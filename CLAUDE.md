@@ -60,9 +60,22 @@ photo NOT used until Adam confirms the parents' OK.
    fundraising info + application, wholesale, about, contact; office admin.
 2. Catering behind the scenes: quote -> Square deposit (Roundbelly's own Square, 3% credit-card fee) -> calendar,
    reminders, Google Calendar sync of public events.
-3. Fundraising: groups, rosters (join link/QR), each seller's own order link + auto flyer (generator prototype:
-   Raise the Dough layout, team colors with contrast checks), cash/check logging, packing sheets by seller,
-   settlement (invoice 60% of gross, credit online x 97%).
+3. Fundraising - FIRST VERSION BUILT (Nov 28 2026), `web/fundraise.py` + templates `web/fr/`:
+   - No passwords: coordinator dashboard = private link /group/<token>/; seller page = private link /me/<token>/;
+     public order page /s/<CODE>/ (5-letter code, no 0/O/1/I); family sign-up /join/<JOINCODE>/.
+   - Models Fundraiser (status setup/open/closed/delivered, dates, pickup, party_goal, team colors, is_demo),
+     Seller (first name + last initial public; parent contact coordinator-only), Order (online/logged; payment
+     cash/check/card/later; collected), OrderLine (prices from content.py, never from the form).
+   - Card payment online only on the demo until Square (stage 2) is connected; real sales: buyers order online and
+     pay the seller ("later") or the seller logs cash/check orders.
+   - Settlement on the dashboard: Roundbelly's 60% of gross, card orders credited x 0.97, balance at delivery.
+   - Packing sheet /group/<token>/packing/ (kitchen totals + one box list per seller). Flyers: `web/flyer.py` (ported
+     prototype, team colors via team_palette, small print images in web/flyer_img, fonts in web/flyer_fonts),
+     /me/<token>/flyer.pdf and /group/<token>/flyers.pdf (all sellers).
+   - Office: Fundraisers admin (links to send, totals), "Set up a fundraiser from this application" action.
+   - Demo: `manage.py make_demo_fundraiser [--reset]` (runs on every deploy, only makes it if missing): Riverbend
+     Raptors Volleyball (fake, purple/gold), 14 sellers, join code DEMO, DEMO banner on every page.
+   Still to do: Square card payments, emails (seller links to parents, order receipts), sale auto-close, ERP sync.
 4. Wholesale logins with each customer's own pricing.
 5. ERP sync - the ERP (ch-erp, company RB) always starts the connection; the website never holds ERP credentials.
    Signed requests, scoped keys, ERP treats website data as untrusted drafts. Minors' contact info stays here.
