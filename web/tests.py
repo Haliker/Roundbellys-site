@@ -315,3 +315,160 @@ class SetupStageTest(TestCase):
         self.client.post(reverse("web:coordinator", args=[f.token]), {"action": "open"})
         self.client.post(reverse("web:order_page", args=[s.code]), {"q_cheese_10": "1", "buyer_name": "X", "payment": "later", "website": ""})
         self.assertEqual(Order.objects.count(), 1)
+
+
+class EmailAndImportTest(TestCase):
+    def setUp(self):
+        from .models import Fundraiser
+        today = timezone.localdate()
+        self.f = Fundraiser.objects.create(group="Test Tigers", coordinator="Coach Kim", coordinator_email="kim@example.com",
+                                           sale_start=today, sale_end=today + timedelta(days=10), status="open",
+                                           pickup_date=today + timedelta(days=20), pickup_place="Gym")
+        self.dash = reverse("web:coordinator", args=[self.f.token])
+
+    def test_signup_emails_the_parent_their_links(self):
+        self.client.post(reverse("web:join", args=[self.f.join_code]), {
+            "first_name": "jake", "last_initial": "s", "parent_name": "Amy", "parent_email": "amy@example.com",
+            "parent_phone": "", "goal": "10", "website": ""})
+        s = self.f.sellers.get()
+        self.assertEqual(len(mail.outbox), 1)
+        m = mail.outbox[0]
+        self.assertEqual(m.to, ["amy@example.com"])
+        self.assertEqual(m.reply_to, ["kim@example.com"])
+        self.assertIn("Jake's seller page", m.subject)
+        self.assertIn(reverse("web:seller_home", args=[s.token]), m.body)
+        self.assertIn(reverse("web:order_page", args=[s.code]), m.body)
+        self.assertNotIn("&#x27;", m.body + m.subject)  # plain text isn't HTML-escaped
+        self.assertIn(reverse("web:seller_flyer", args=[s.token]), m.alternatives[0][0])
+        self.assertEqual(self.f.emails.get().status, "sent")
+
+    def test_online_order_sends_receipt_and_tells_the_parent(self):
+        from .models import Seller
+        s = Seller.objects.create(fundraiser=self.f, first_name="Jake", last_initial="S", parent_email="amy@example.com")
+        self.client.post(reverse("web:order_page", args=[s.code]), {
+            "q_cheese_10": "2", "buyer_name": "Grandma", "buyer_email": "gma@example.com", "payment": "later",
+            "website": ""})
+        to = {m.to[0]: m for m in mail.outbox}
+        self.assertEqual(set(to), {"gma@example.com", "amy@example.com"})
+        self.assertIn("$20.00", to["gma@example.com"].body)
+        self.assertIn("pay Jake", to["gma@example.com"].body)
+        self.assertIn("Grandma", to["amy@example.com"].subject)
+        self.assertEqual(to["amy@example.com"].reply_to, ["gma@example.com"])
+
+    def test_paper_order_receipt_only_when_email_given_and_no_note_to_parent(self):
+        from .models import Seller
+        s = Seller.objects.create(fundraiser=self.f, first_name="Jake", parent_email="amy@example.com")
+        self.client.post(reverse("web:seller_log", args=[s.token]), {
+            "q_cheese_10": "1", "buyer_name": "Neighbor", "buyer_email": "", "payment": "cash", "website": ""})
+        self.assertEqual(len(mail.outbox), 0)
+        self.client.post(reverse("web:seller_log", args=[s.token]), {
+            "q_cheese_10": "1", "buyer_name": "Aunt", "buyer_email": "aunt@example.com", "payment": "cash", "website": ""})
+        self.assertEqual([m.to for m in mail.outbox], [["aunt@example.com"]])
+        self.assertIn("Paid to Jake", mail.outbox[0].body)
+
+    def _upload(self, name, data):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post(self.dash, {"action": "upload", "file": SimpleUploadedFile(name, data)})
+
+    def test_csv_upload_preview_then_add_and_email(self):
+        from .models import Seller
+        Seller.objects.create(fundraiser=self.f, first_name="Ava", last_initial="B", parent_email="b@example.com")
+        csv_data = ("Student,Parent / Guardian,Email,Cell\n"
+                    "Jake Sullivan,Erin Sullivan,erin@example.com,(574) 555-0101\n"
+                    "\"Lopez, Maria\",Rosa,not-an-email,\n"
+                    "Ava Brown,,b@example.com,\n"
+                    ",,,\n"
+                    "Theo,,theo@example.com,\n").encode()
+        r = self._upload("roster.csv", csv_data)
+        self.assertRedirects(r, reverse("web:seller_import", args=[self.f.token]))
+        page = self.client.get(reverse("web:seller_import", args=[self.f.token]))
+        self.assertContains(page, "3 sellers ready")
+        self.assertContains(page, "already signed up")
+        self.assertContains(page, "isn&#x27;t an email")
+        self.assertContains(page, "Jake S.")
+        self.assertNotContains(page, "Jake Sullivan")  # seller's last name never kept
+        r = self.client.post(reverse("web:seller_import", args=[self.f.token]), {"email": "1"})
+        self.assertRedirects(r, self.dash)
+        names = sorted((s.first_name, s.last_initial, s.parent_email, s.parent_phone) for s in self.f.sellers.all())
+        self.assertEqual(names, [("Ava", "B", "b@example.com", ""), ("Jake", "S", "erin@example.com", "574-555-0101"),
+                                 ("Maria", "L", "", ""), ("Theo", "", "theo@example.com", "")])
+        self.assertEqual(sorted(m.to[0] for m in mail.outbox), ["erin@example.com", "theo@example.com"])
+        # posting the preview again doesn't add them twice
+        self.client.post(reverse("web:seller_import", args=[self.f.token]), {"email": "1"})
+        self.assertEqual(self.f.sellers.count(), 4)
+
+    def test_excel_upload_from_the_template(self):
+        import io
+        from openpyxl import load_workbook
+        r = self.client.get(reverse("web:import_template", args=[self.f.token]))
+        wb = load_workbook(io.BytesIO(r.content))
+        ws = wb.active
+        ws.append(["Mia", "Jones", "Pat Jones", "pat@example.com", "5745550199", 25])
+        buf = io.BytesIO()
+        wb.save(buf)
+        self._upload("Sellers.xlsx", buf.getvalue())
+        self.client.post(reverse("web:seller_import", args=[self.f.token]), {})  # no email box ticked
+        got = {s.first_name: s for s in self.f.sellers.all()}
+        self.assertEqual(set(got), {"Jake", "Mia"})
+        self.assertEqual((got["Mia"].goal, got["Mia"].last_initial, got["Mia"].parent_phone), (25, "J", "574-555-0199"))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_bad_files_are_explained(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        r = self.client.post(self.dash, {"action": "upload", "file": SimpleUploadedFile("x.csv", b"Color,Size\nred,big\n")},
+                             follow=True)
+        self.assertContains(r, "couldn&#x27;t find a seller name column")
+        r = self.client.post(self.dash, {"action": "upload", "file": SimpleUploadedFile("old.xls", b"\xd0\xcf\x11\xe0junk")},
+                             follow=True)
+        self.assertContains(r, "Save As")
+
+    def test_group_message_goes_to_each_family_with_their_own_links(self):
+        from .models import Seller
+        a = Seller.objects.create(fundraiser=self.f, first_name="Jake", parent_email="amy@example.com")
+        b = Seller.objects.create(fundraiser=self.f, first_name="Mia", parent_email="pat@example.com")
+        Seller.objects.create(fundraiser=self.f, first_name="NoEmail")
+        page = self.client.get(self.dash)
+        self.assertContains(page, "Pickup reminder")
+        self.assertContains(page, "Send to 2 families")
+        self.client.post(self.dash, {"action": "message", "subject": "Pickup Friday", "message": "Bring a cooler."})
+        by = {m.to[0]: m for m in mail.outbox}
+        self.assertEqual(set(by), {"amy@example.com", "pat@example.com"})
+        self.assertIn(reverse("web:order_page", args=[a.code]), by["amy@example.com"].body)
+        self.assertNotIn(reverse("web:order_page", args=[b.code]), by["amy@example.com"].body)
+        self.assertEqual(by["pat@example.com"].reply_to, ["kim@example.com"])
+        self.assertContains(self.client.get(self.dash), '"Pickup Friday" to 2')
+
+    def test_resend_one_link_and_coordinator_welcome(self):
+        from .models import Seller
+        s = Seller.objects.create(fundraiser=self.f, first_name="Jake", parent_email="amy@example.com")
+        self.client.post(self.dash, {"action": "email_seller", "seller": s.pk})
+        self.assertEqual(mail.outbox[-1].to, ["amy@example.com"])
+        from . import emails
+        e = emails.coordinator_welcome(self.f, "https://roundbellyspizza.com")
+        self.assertEqual(e.status, "sent")
+        self.assertIn(f"https://roundbellyspizza.com/group/{self.f.token}/", mail.outbox[-1].body)
+
+    def test_demo_never_sends_but_logs(self):
+        from .models import Seller
+        self.f.is_demo = True
+        self.f.save()
+        Seller.objects.create(fundraiser=self.f, first_name="Jake", parent_email="amy@example.com")
+        r = self.client.post(self.dash, {"action": "message", "subject": "Hi", "message": "Hello"}, follow=True)
+        self.assertContains(r, "Nothing was sent")
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(self.f.emails.get().status, "demo")
+
+    @override_settings(EMAIL_BACKEND="web.tests.BrokenBackend")
+    def test_failed_email_never_breaks_the_signup(self):
+        r = self.client.post(reverse("web:join", args=[self.f.join_code]), {
+            "first_name": "jake", "parent_name": "Amy", "parent_email": "amy@example.com", "goal": "10", "website": ""})
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(self.f.emails.get().status, "failed")
+
+
+from django.core.mail.backends.base import BaseEmailBackend  # noqa: E402
+
+
+class BrokenBackend(BaseEmailBackend):
+    def send_messages(self, messages):
+        raise OSError("mail server down")

@@ -1,0 +1,1 @@
+Your {{ f.group }} pizza fundraiser is ready

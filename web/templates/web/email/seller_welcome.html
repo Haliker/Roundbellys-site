@@ -1,0 +1,12 @@
+{% extends "web/email/_base.html" %}
+{% block body %}
+<p style="margin-top:0;">Hi{% if seller.parent_name %} {{ seller.parent_name }}{% endif %},</p>
+<p><strong>{{ seller.first_name }}</strong> is signed up for the <strong>{{ f.group }}</strong> pizza fundraiser. The sale runs {{ f.sale_start|date:"F j" }} to {{ f.sale_end|date:"F j" }}{% if f.pickup_date %}, and pizzas arrive {{ f.pickup_date|date:"l, F j" }}{% endif %}.</p>
+<p style="margin-bottom:0;"><strong>{{ seller.first_name }}'s seller page</strong> keeps track of every order and who still needs to pay. Keep this link private.</p>
+{% include "web/email/_button.html" with href=seller_link label="Open the seller page" %}
+<p style="margin-bottom:4px;"><strong>Order link to share</strong> with family and friends:</p>
+<p style="margin-top:0;font-family:Arial,sans-serif;"><a href="{{ order_link }}" style="color:#a3281c;">{{ order_link }}</a></p>
+{% include "web/email/_button.html" with href=flyer_link label="Print the flyer (with QR code)" color="#f6b400" %}
+<p>The easiest way to sell: open the seller page on your phone and tap <strong>Text it</strong> to send the order link to people you know.</p>
+<p>{{ f.group }} keeps 40% of every pizza sold. Questions about the sale? Just reply - it goes to {{ f.coordinator }}, your coordinator.</p>
+{% endblock %}

@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import (Booking, CateringRequest, ContactMessage, Fundraiser, FundraiserInquiry, Order, OrderLine, Seller,
-                     SiteSettings, Testimonial)
+                     SiteSettings, Testimonial, EmailLog)
 
 
 class UpcomingFilter(admin.SimpleListFilter):
@@ -106,8 +106,8 @@ def make_fundraiser(modeladmin, request, queryset):
         q.save(update_fields=["status"])
         made.append(f)
     if made:
-        messages.success(request, f"Set up {len(made)} fundraiser(s). Open each one to check the dates, then send the "
-                                  "coordinator their dashboard link.")
+        messages.success(request, f"Set up {len(made)} fundraiser(s). Open each one to check the dates, then tick it on the "
+                                  "Fundraisers list and choose \"Email the coordinator their dashboard link\".")
 
 
 @admin.register(FundraiserInquiry)
@@ -150,8 +150,23 @@ class SellerInline(admin.TabularInline):
     readonly_fields = ["code"]
 
 
+@admin.action(description="Email the coordinator their dashboard link")
+def email_coordinator(modeladmin, request, queryset):
+    from . import emails
+    base = emails.base_url(request)
+    for f in queryset:
+        e = emails.coordinator_welcome(f, base)
+        if e.status == EmailLog.SENT:
+            messages.success(request, f"Emailed {f.coordinator} ({f.coordinator_email}) the {f.group} dashboard link.")
+        elif e.status == EmailLog.DEMO:
+            messages.info(request, f"{f.group} is the demo - nothing sent. See Emails sent for what it would say.")
+        else:
+            messages.error(request, f"The email to {f.coordinator_email} failed: {e.error}")
+
+
 @admin.register(Fundraiser)
 class FundraiserAdmin(admin.ModelAdmin):
+    actions = [email_coordinator]
     list_display = ["group", "organization", "status", "sale_start", "sale_end", "is_demo", "dashboard"]
     list_filter = ["status", "is_demo"]
     search_fields = ["group", "organization", "coordinator", "coordinator_email"]
@@ -204,3 +219,17 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ["fundraiser", "payment", "collected", "how"]
     search_fields = ["buyer_name", "buyer_phone", "buyer_email", "seller__first_name"]
     inlines = [OrderLineInline]
+
+
+@admin.register(EmailLog)
+class EmailLogAdmin(admin.ModelAdmin):
+    list_display = ["created", "kind", "to", "subject", "fundraiser", "status"]
+    list_filter = ["status", "kind", "fundraiser"]
+    search_fields = ["to", "subject"]
+    readonly_fields = ["created", "kind", "to", "subject", "body", "fundraiser", "status", "error"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

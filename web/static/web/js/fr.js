@@ -33,4 +33,11 @@
       else window.prompt("Copy this:", text);
     });
   });
+  document.querySelectorAll("[data-preset-subject]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var subj = document.getElementById("msg_subject"), body = document.getElementById("msg_body");
+      if (body.value.trim() && !window.confirm("Replace what you've written?")) return;
+      subj.value = b.dataset.presetSubject; body.value = b.dataset.presetMessage; body.focus();
+    });
+  });
 })();

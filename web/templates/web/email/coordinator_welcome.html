@@ -1,0 +1,18 @@
+{% extends "web/email/_base.html" %}
+{% block body %}
+<p style="margin-top:0;">Hi {{ f.coordinator }},</p>
+<p>Your {{ site.program_name }} fundraiser for <strong>{{ f.group }}</strong> is set up. The sale runs {{ f.sale_start|date:"F j" }} to {{ f.sale_end|date:"F j" }}.</p>
+<p style="margin-bottom:0;"><strong>Your dashboard</strong> has your sellers, orders, money and flyers in one place. It's private, just for you.</p>
+{% include "web/email/_button.html" with href=dashboard_link label="Open my dashboard" %}
+<p style="margin-bottom:4px;"><strong>Sign-up link for families</strong> (or show the QR code on your dashboard):</p>
+<p style="margin-top:0;font-family:Arial,sans-serif;"><a href="{{ join_link }}" style="color:#a3281c;">{{ join_link }}</a></p>
+<p style="margin-bottom:4px;"><strong>Getting started</strong></p>
+<ol style="margin-top:0;padding-left:22px;">
+<li>Add your sellers. Send families the sign-up link, or upload a spreadsheet of names and parent emails on your dashboard. Each family gets an email with their seller's own page.</li>
+<li>When you're ready, tap <strong>Open the sale</strong> on your dashboard.</li>
+<li>Watch orders come in. When the sale ends, we make your pizzas and deliver them boxed by seller.</li>
+</ol>
+<p>Bookmark your dashboard. Anyone with that link can see your sellers and orders, so keep it to yourself.</p>
+<p>Questions? Just reply to this email.</p>
+<p>Adam<br>Roundbelly's Pizza</p>
+{% endblock %}

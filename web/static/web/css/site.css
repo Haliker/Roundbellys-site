@@ -424,3 +424,21 @@ input:focus, select:focus, textarea:focus { border-color: var(--ink); outline: 3
   html { scroll-behavior: auto; }
   .btn { transition: none; }
 }
+
+/* Seller upload + family emails (update: email) */
+.addways { margin: 1rem 0 2.5rem; display: grid; gap: .25rem; }
+.addways .addnames { margin: 0; }
+.addnames input[type=file] { display: block; margin: .5rem 0 .75rem; max-width: 100%; }
+.msgbox { margin: 0 0 2.5rem; padding: 1.25rem; border: 2px solid var(--ink); border-radius: var(--r); background: var(--paper); max-width: 720px; }
+.msgbox input, .msgbox textarea { width: 100%; margin-bottom: .75rem; }
+.presets { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0 1rem; }
+.chip { font: inherit; font-weight: 700; padding: .4rem .8rem; border: 2px solid var(--ink); border-radius: 999px; background: #fff; cursor: pointer; }
+.chip:hover, .chip:focus-visible { background: var(--yellow); }
+.tbl__skip td { opacity: .55; }
+.tag { display: inline-block; font-size: .8rem; font-weight: 700; padding: .1rem .5rem; border-radius: 4px; background: #f3ede4; }
+.tag--skip { background: #fde8e6; }
+.importgo { margin-top: 1.5rem; }
+.check { display: flex; gap: .6rem; align-items: flex-start; font-weight: 600; margin-bottom: .75rem; }
+.check input { margin-top: .3rem; width: 1.2rem; height: 1.2rem; }
+.tbl--import td { overflow-wrap: anywhere; }
+.tbl--import td:first-child { width: 38%; }

@@ -1,0 +1,7 @@
+{{ message }}
+
+- {{ f.coordinator }}, {{ f.group }}
+
+----
+{{ seller.first_name }}'s order link to share: {{ order_link }}
+{{ seller.first_name }}'s seller page (private): {{ seller_link }}

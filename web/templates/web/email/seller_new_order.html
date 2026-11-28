@@ -1,0 +1,8 @@
+{% extends "web/email/_base.html" %}
+{% block body %}
+<p style="margin-top:0;"><strong>{{ order.buyer_name }}</strong> just ordered from {{ seller.first_name }}'s link:</p>
+{% include "web/email/_lines.html" %}
+<p>{% if order.payment == "card" %}Paid by card online - nothing to collect.{% else %}They'll pay {{ seller.first_name }} <strong>${{ order.total|floatformat:2 }}</strong> by cash or check. Mark it paid on the seller page when you get it.{% endif %}</p>
+{% if order.buyer_phone or order.note %}<p style="font-family:Arial,sans-serif;font-size:15px;">{% if order.buyer_phone %}Phone: {{ order.buyer_phone }}<br>{% endif %}{% if order.note %}Note: {{ order.note }}{% endif %}</p>{% endif %}
+{% include "web/email/_button.html" with href=seller_link label="Open the seller page" %}
+{% endblock %}

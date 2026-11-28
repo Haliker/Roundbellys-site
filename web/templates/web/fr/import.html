@@ -1,0 +1,38 @@
+{% extends "web/base.html" %}
+{% block title %}Check your seller list | {{ f.group }}{% endblock %}
+{% block content %}
+{% include "web/fr/_demo.html" %}
+<section class="frhead" style="--team1: {{ f.color1 }}; --team2: {{ f.color2 }}; --teamink: {{ f.ink_on_color1 }};">
+  <div class="wrap"><p class="frhead__kicker">Upload sellers</p><h1 class="frhead__title">Check your list</h1>
+  <p class="frhead__group">{{ good }} seller{{ good|pluralize }} ready to add{% if skipped %}, {{ skipped }} skipped{% endif %}.</p></div>
+</section>
+<section class="wrap section">
+  <p class="lede">Here's what we read from your file. Order pages only show first name and last initial, so that's all we keep of the seller's name.</p>
+  <div class="tablewrap">
+  <table class="tbl tbl--import">
+    <thead><tr><th>Seller</th><th>Parent</th><th class="num">Goal</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr{% if not r.ok %} class="tbl__skip"{% endif %}>
+      <td><strong>{{ r.first|default:"?" }}{% if r.last_initial %} {{ r.last_initial }}.{% endif %}</strong>
+        {% if not r.ok %}<br><span class="tag tag--skip">Skipped</span>{% elif not r.parent_email %}<br><span class="tag">No email</span>{% endif %}
+        {% for p in r.problems %}<br><span class="muted">{{ p }}</span>{% endfor %}</td>
+      <td>{{ r.parent_name|default:"-" }}{% if r.parent_email %}<br><span class="muted">{{ r.parent_email }}</span>{% endif %}{% if r.parent_phone %}<br><span class="muted">{{ r.parent_phone }}</span>{% endif %}</td>
+      <td class="num">{{ r.goal }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if good %}
+  <form method="post" class="importgo">{% csrf_token %}
+    <label class="check"><input type="checkbox" name="email" value="1" {% if with_email %}checked{% else %}disabled{% endif %}>
+      Email {{ with_email }} famil{{ with_email|pluralize:"y,ies" }} their seller's own page, order link and flyer</label>
+    {% if good > with_email %}<p class="muted">Sellers without an email still get added. You can copy their links from your dashboard.</p>{% endif %}
+    <div class="btnrow"><button class="btn btn--red btn--big" type="submit">Add {{ good }} seller{{ good|pluralize }}</button>
+    <button class="btn" type="submit" name="action" value="cancel" formnovalidate>Cancel</button></div>
+  </form>
+  {% else %}
+  <form method="post">{% csrf_token %}<p>Nothing new to add from this file.</p><button class="btn" type="submit" name="action" value="cancel">Back to my dashboard</button></form>
+  {% endif %}
+</section>
+{% endblock %}

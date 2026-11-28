@@ -106,6 +106,9 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Roundbelly's Pizza <adam@roundbellyspizza.com>")
 OFFICE_EMAIL = os.environ.get("OFFICE_EMAIL", "adam@roundbellyspizza.com")
+SITE_URL = os.environ.get("SITE_URL", "")  # links in emails, e.g. https://roundbellyspizza.com (blank = address in use)
+EMAIL_TIMEOUT = 20
+EMAIL_IN_BACKGROUND = not os.environ.get("TESTING")  # big group emails send after the page answers
 if not EMAIL_HOST:
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend" if os.environ.get("TESTING") else "django.core.mail.backends.console.EmailBackend"
 

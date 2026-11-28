@@ -75,7 +75,20 @@ photo NOT used until Adam confirms the parents' OK.
    - Office: Fundraisers admin (links to send, totals), "Set up a fundraiser from this application" action.
    - Demo: `manage.py make_demo_fundraiser [--reset]` (runs on every deploy, only makes it if missing): Riverbend
      Raptors Volleyball (fake, purple/gold), 14 sellers, join code DEMO, DEMO banner on every page.
-   Still to do: Square card payments, emails (seller links to parents, order receipts), sale auto-close, ERP sync.
+   - Emails (Nov 28 2026), `web/emails.py` + templates `web/email/` (plain text + simple HTML each): seller_welcome
+     (parent gets seller page / order link / flyer on sign-up, on upload, or "Email it to the parent" on the dashboard),
+     order_receipt (buyer, when they give an email - online or paper), seller_new_order (parent, online orders only),
+     coordinator_welcome (office: Fundraisers list action "Email the coordinator their dashboard link"), group_message
+     (dashboard "Email your families": presets open / last few days / pickup; one email per seller with their own links,
+     reply-to the coordinator; sent in a background thread). Every email is logged in `EmailLog` (office "Email logs",
+     with the full text); demo fundraisers NEVER send - logged as "demo". A failed email never breaks the page.
+     Needs SMTP env vars on Render (EMAIL_HOST etc.); SITE_URL sets the address used in links.
+   - Seller upload (`web/seller_import.py`): coordinator uploads .xlsx/.csv (columns found by heading words: student /
+     player / first / last / parent / email / phone / cell / goal; "Last, First" and "First Last" split), preview page
+     /group/<token>/import/ (skips duplicates + already signed up, flags bad emails), then add + optionally email every
+     family. Blank template /group/<token>/seller-list-template.xlsx. Only the last INITIAL is kept. Max 500 rows / 2 MB.
+   - Texting: none from the website (Adam, Nov 28: keep texting through the seller's own phone - "Text it" button).
+   Still to do: Square card payments, sale auto-close, ERP sync.
 4. Wholesale logins with each customer's own pricing.
 5. ERP sync - the ERP (ch-erp, company RB) always starts the connection; the website never holds ERP credentials.
    Signed requests, scoped keys, ERP treats website data as untrusted drafts. Minors' contact info stays here.

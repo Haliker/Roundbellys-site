@@ -1,0 +1,1 @@
+New order for {{ seller.first_name }}: {{ order.buyer_name }}, {{ order.pizzas }} pizza{{ order.pizzas|pluralize }}

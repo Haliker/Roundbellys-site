@@ -24,5 +24,7 @@ urlpatterns = [
     path("me/<str:token>/flyer.pdf", fundraise.seller_flyer, name="seller_flyer"),
     path("group/<str:token>/", fundraise.coordinator, name="coordinator"),
     path("group/<str:token>/packing/", fundraise.packing, name="packing"),
+    path("group/<str:token>/import/", fundraise.seller_import, name="seller_import"),
+    path("group/<str:token>/seller-list-template.xlsx", fundraise.import_template, name="import_template"),
     path("group/<str:token>/flyers.pdf", fundraise.all_flyers, name="all_flyers"),
 ]

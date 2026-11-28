@@ -52,10 +52,11 @@
     <thead><tr><th>Seller</th><th>Goal</th><th class="num">Pizzas</th><th class="num">Sales</th><th>Seller page</th></tr></thead>
     <tbody>
     {% for r in sellers %}
-      <tr><td><strong>{{ r.s.display }}</strong>{% if r.s.parent_name %}<br><span class="muted">{{ r.s.parent_name }}{% if r.s.parent_phone %}, {{ r.s.parent_phone }}{% endif %}</span>{% endif %}</td>
+      <tr><td><strong>{{ r.s.display }}</strong>{% if r.s.parent_name or r.s.parent_email %}<br><span class="muted">{{ r.s.parent_name }}{% if r.s.parent_phone %}, {{ r.s.parent_phone }}{% endif %}{% if r.s.parent_email %}<br>{{ r.s.parent_email }}{% endif %}</span>{% endif %}</td>
       <td><span class="meter meter--sm"><span style="width: {{ r.pct }}%"></span></span><span class="muted">{{ r.s.goal }}</span></td>
       <td class="num">{{ r.pizzas }}</td><td class="num">${{ r.sales|floatformat:"2g" }}</td>
       <td><button class="linkbtn" type="button" data-copy="{{ request.scheme }}://{{ request.get_host }}{% url 'web:seller_home' r.s.token %}">Copy private link</button>
+      {% if r.s.parent_email %}<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="email_seller"><input type="hidden" name="seller" value="{{ r.s.pk }}"><button class="linkbtn" type="submit">Email it to the parent</button></form>{% endif %}
       {% if not r.pizzas %}<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="seller_off"><input type="hidden" name="seller" value="{{ r.s.pk }}"><button class="linkbtn linkbtn--muted" type="submit">Remove</button></form>{% endif %}</td></tr>
     {% empty %}
       <tr><td colspan="5" class="empty">No sellers yet. Share the sign-up link, or add names below.</td></tr>
@@ -64,15 +65,44 @@
   </table>
   </div>
   {% if f.can_join %}
+  <div class="addways">
+  <details class="addnames" open>
+    <summary>Upload a spreadsheet of sellers</summary>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden" name="action" value="upload">
+      <p>Excel or CSV with a row per seller: first name, last name, parent name, parent email, phone, goal. Use your team roster - we'll find the columns. You'll check the list before anything is added, and each family can get an email with their seller's own page.</p>
+      <input type="file" name="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required>
+      <div class="btnrow"><button class="btn btn--red" type="submit">Upload and check</button>
+      <a class="linkbtn" href="{% url 'web:import_template' f.token %}">Download a blank template</a></div>
+    </form>
+  </details>
   <details class="addnames">
-    <summary>Add sellers yourself</summary>
+    <summary>Type names in yourself</summary>
     <form method="post">{% csrf_token %}<input type="hidden" name="action" value="add_sellers">
       <label class="field__label" for="names">One per line: first name and last name (we only keep the last initial)</label>
       <textarea id="names" name="names" rows="5" placeholder="Jake Sullivan&#10;Maria Lopez"></textarea>
       <button class="btn btn--red" type="submit">Add sellers</button>
     </form>
   </details>
+  </div>
   {% endif %}
+
+  <div class="msgbox" id="message">
+    <h2 class="h2">Email your families</h2>
+    {% if with_email %}
+    <p>Goes to the {{ with_email }} famil{{ with_email|pluralize:"y,ies" }} with an email on file, one email each, with their own seller's links added at the bottom. Replies come to you at {{ f.coordinator_email }}.</p>
+    <div class="presets">{% for p in presets %}<button class="chip" type="button" data-preset-subject="{{ p.subject }}" data-preset-message="{{ p.message }}">{{ p.label }}</button>{% endfor %}</div>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="message">
+      <label class="field__label" for="msg_subject">Subject</label>
+      <input type="text" id="msg_subject" name="subject" maxlength="150" required>
+      <label class="field__label" for="msg_body">Message</label>
+      <textarea id="msg_body" name="message" rows="7" required></textarea>
+      <button class="btn btn--red" type="submit">Send to {{ with_email }} famil{{ with_email|pluralize:"y,ies" }}</button>
+    </form>
+    {% if last_messages %}<p class="muted">Sent: {% for m in last_messages %}"{{ m.subject }}" to {{ m.n }} on {{ m.when|date:"M j, g:i A" }}{% if not forloop.last %}; {% endif %}{% endfor %}</p>{% endif %}
+    {% else %}
+    <p class="muted">Once families sign up (or you upload a list with parent emails), you can email them all from here.</p>
+    {% endif %}
+  </div>
 
   <div class="split2">
     <div>

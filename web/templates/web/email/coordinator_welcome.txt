@@ -1,0 +1,21 @@
+Hi {{ f.coordinator }},
+
+Your {{ site.program_name }} fundraiser for {{ f.group }} is set up. The sale runs {{ f.sale_start|date:"F j" }} to {{ f.sale_end|date:"F j" }}.
+
+YOUR DASHBOARD - private, just for you. Sellers, orders, money and flyers, all in one place:
+{{ dashboard_link }}
+
+SIGN-UP LINK for families - send this to parents, or show the QR code on your dashboard:
+{{ join_link }}
+
+Getting started:
+1. Add your sellers. Send families the sign-up link, or upload a spreadsheet of names and parent emails on your dashboard - each family gets an email with their seller's own page.
+2. When you're ready, tap "Open the sale" on your dashboard.
+3. Watch orders come in. When the sale ends, we make your pizzas and deliver them boxed by seller.
+
+Bookmark your dashboard. Anyone with that link can see your sellers and orders, so keep it to yourself.
+
+Questions? Just reply to this email.
+
+Adam
+Roundbelly's Pizza

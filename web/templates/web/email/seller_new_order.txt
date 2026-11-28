@@ -1,0 +1,12 @@
+{{ order.buyer_name }} just ordered from {{ seller.first_name }}'s link:
+{% for l in lines %}
+  {{ l.qty }} x {{ l.flavor_name }} {{ l.get_size_display }}{% endfor %}
+
+  {{ order.pizzas }} pizza{{ order.pizzas|pluralize }}, ${{ order.total|floatformat:2 }}
+{% if order.payment == "card" %}
+Paid by card online - nothing to collect.{% else %}
+They'll pay {{ seller.first_name }} ${{ order.total|floatformat:2 }} by cash or check. Mark it paid on the seller page when you get it.{% endif %}
+{% if order.buyer_phone %}Phone: {{ order.buyer_phone }}{% endif %}{% if order.note %}
+Note: {{ order.note }}{% endif %}
+
+{{ seller.first_name }}'s seller page: {{ seller_link }}

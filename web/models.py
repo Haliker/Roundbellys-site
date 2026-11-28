@@ -347,6 +347,33 @@ class OrderLine(models.Model):
         ordering = ["id"]
 
     @property
+    def line_total(self):
+        return self.unit_price * self.qty
+
+    @property
     def flavor_name(self):
         from .content import FLAVORS
         return next((f["name"] for f in FLAVORS if f["slug"] == self.flavor), self.flavor)
+
+
+class EmailLog(models.Model):
+    """Every email the website sends (or would send, on the demo). Office: Emails sent."""
+    WAITING, SENT, FAILED, DEMO = "waiting", "sent", "failed", "demo"
+    STATUSES = [(WAITING, "Sending"), (SENT, "Sent"), (FAILED, "Failed"), (DEMO, "Demo - not sent")]
+    KINDS = [("seller_welcome", "Seller page link to parent"), ("order_receipt", "Order receipt to buyer"),
+             ("seller_new_order", "New order note to parent"), ("coordinator_welcome", "Dashboard link to coordinator"),
+             ("group_message", "Coordinator message to families")]
+    kind = models.CharField(max_length=24, choices=KINDS)
+    to = models.EmailField()
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    fundraiser = models.ForeignKey(Fundraiser, null=True, blank=True, on_delete=models.SET_NULL, related_name="emails")
+    status = models.CharField(max_length=8, choices=STATUSES, default=WAITING)
+    error = models.CharField(max_length=300, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return f"{self.subject} -> {self.to}"

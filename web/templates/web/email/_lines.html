@@ -1,0 +1,4 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0;border-top:2px solid #1b1714;border-bottom:2px solid #1b1714;font-family:Arial,sans-serif;font-size:15px;">
+{% for l in lines %}<tr><td style="padding:6px 0;">{{ l.qty }} &times; {{ l.flavor_name }} {{ l.get_size_display }}</td><td align="right" style="padding:6px 0;">${{ l.line_total|floatformat:2 }}</td></tr>{% endfor %}
+<tr><td style="padding:8px 0;font-weight:bold;border-top:1px solid #e3d9cc;">{{ order.pizzas }} pizza{{ order.pizzas|pluralize }}</td><td align="right" style="padding:8px 0;font-weight:bold;border-top:1px solid #e3d9cc;">${{ order.total|floatformat:2 }}</td></tr>
+</table>

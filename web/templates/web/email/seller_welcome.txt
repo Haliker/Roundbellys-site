@@ -1,0 +1,18 @@
+Hi{% if seller.parent_name %} {{ seller.parent_name }}{% endif %},
+
+{{ seller.first_name }} is signed up for the {{ f.group }} pizza fundraiser with Roundbelly's Pizza. The sale runs {{ f.sale_start|date:"F j" }} to {{ f.sale_end|date:"F j" }}{% if f.pickup_date %}, and pizzas arrive {{ f.pickup_date|date:"l, F j" }}{% endif %}.
+
+{{ seller.first_name }}'S ORDER LINK - share this with family and friends:
+{{ order_link }}
+
+{{ seller.first_name }}'S SELLER PAGE - keep this one private. It shows every order, who still needs to pay, and lets you enter paper orders:
+{{ seller_link }}
+
+PRINTABLE FLYER with {{ seller.first_name }}'s own QR code:
+{{ flyer_link }}
+
+The easiest way to sell: open the seller page on your phone and tap "Text it" to send the order link to people you know.
+
+{{ f.group }} keeps 40% of every pizza sold. Questions about the sale? Just reply - it goes to {{ f.coordinator }}, your coordinator.
+
+Roundbelly's Pizza

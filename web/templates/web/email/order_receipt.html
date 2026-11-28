@@ -1,0 +1,9 @@
+{% extends "web/email/_base.html" %}
+{% block body %}
+<p style="margin-top:0;font-size:20px;"><strong>Thanks, {{ order.buyer_name }}!</strong></p>
+<p>Your order with {{ seller.display }} for the {{ f.group }} fundraiser:</p>
+{% include "web/email/_lines.html" %}
+<p>{% if order.payment == "card" %}Paid by card.{% elif order.collected %}Paid to {{ seller.first_name }} - thank you.{% else %}<strong>Please pay {{ seller.first_name }} by cash or check when your pizzas arrive.</strong>{% endif %}{% if f.pickup_date %} Your pizzas arrive around {{ f.pickup_date|date:"l, F j" }}, and {{ seller.first_name }} will get them to you.{% endif %}</p>
+<p>Our pizzas are made in our own USDA-inspected kitchen in South Bend and come frozen. Keep them in the freezer and bake from frozen. Cooking directions are on the label.</p>
+<p>{{ f.group }} keeps 40% of every pizza. Thanks for supporting them!</p>
+{% endblock %}

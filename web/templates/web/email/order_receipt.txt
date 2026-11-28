@@ -1,0 +1,16 @@
+Thanks, {{ order.buyer_name }}!
+
+Your order with {{ seller.display }} for the {{ f.group }} fundraiser:
+{% for l in lines %}
+  {{ l.qty }} x {{ l.flavor_name }} {{ l.get_size_display }}{% endfor %}
+
+  {{ order.pizzas }} pizza{{ order.pizzas|pluralize }}, ${{ order.total|floatformat:2 }}
+
+{% if order.payment == "card" %}Paid by card.{% elif order.collected %}Paid to {{ seller.first_name }} - thank you.{% else %}Please pay {{ seller.first_name }} by cash or check when your pizzas arrive.{% endif %}
+{% if f.pickup_date %}Your pizzas arrive around {{ f.pickup_date|date:"l, F j" }}. {{ seller.first_name }} will get them to you.{% endif %}
+
+Our pizzas are made in our own USDA-inspected kitchen in South Bend and come frozen. Keep them in the freezer and bake from frozen - cooking directions are on the label.
+
+{{ f.group }} keeps 40% of every pizza. Thanks for supporting them!
+
+Roundbelly's Pizza
