@@ -251,9 +251,15 @@ class Fundraiser(models.Model):
 
     @property
     def taking_orders(self):
+        """Orders only once the coordinator has opened the sale, until the last day."""
         from django.utils import timezone
-        today = timezone.localdate()
-        return self.status in (self.SETUP, self.OPEN) and today <= self.sale_end
+        return self.status == self.OPEN and timezone.localdate() <= self.sale_end
+
+    @property
+    def can_join(self):
+        """Families can sign up sellers while the sale is being set up and while it's open."""
+        from django.utils import timezone
+        return self.status in (self.SETUP, self.OPEN) and timezone.localdate() <= self.sale_end
 
     def lines(self):
         return OrderLine.objects.filter(order__fundraiser=self)

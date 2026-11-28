@@ -137,7 +137,7 @@ def order_thanks(request, code):
 def join(request, code):
     f = get_object_or_404(Fundraiser, join_code=code.upper())
     form = JoinForm(request.POST or None)
-    if request.method == "POST" and f.taking_orders and form.is_valid():
+    if request.method == "POST" and f.can_join and form.is_valid():
         if form.cleaned_data.get("website"):
             return redirect("web:join", code=f.join_code)
         d = form.cleaned_data

@@ -21,7 +21,7 @@
     <div class="card">
       <h2 class="h3">Share your order link</h2>
       <p>Buyers order from you here, any time, on any phone.</p>
-      <p class="linkbox"><a href="{{ link }}">{{ link }}</a></p>
+      <p class="linkbox"><a href="{{ link }}">{{ link|cut:"https://"|cut:"http://" }}</a></p>
       <div class="btnrow">
         <button class="btn btn--yellow" type="button" data-copy="{{ link }}">Copy link</button>
         <a class="btn" href="sms:?&body={{ share_text|urlencode }}">Text it</a>

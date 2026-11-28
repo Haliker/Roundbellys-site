@@ -298,3 +298,20 @@ class FundraiserFlowTest(TestCase):
         demo = Fundraiser.objects.get(is_demo=True)
         self.assertGreater(demo.totals()["pizzas"], 50)
         self.assertContains(self.client.get(reverse("web:coordinator", args=[demo.token])), "Demo fundraiser")
+
+
+class SetupStageTest(TestCase):
+    def test_families_can_join_before_the_sale_opens_but_orders_wait(self):
+        from .models import Fundraiser, Order
+        today = timezone.localdate()
+        f = Fundraiser.objects.create(group="G", coordinator="C", coordinator_email="c@example.com", sale_start=today,
+                                      sale_end=today + timedelta(days=5))  # status = setup
+        self.client.post(reverse("web:join", args=[f.join_code]), {"first_name": "Ann", "parent_name": "P",
+                         "parent_email": "p@example.com", "goal": "5", "website": ""})
+        s = f.sellers.get()
+        self.assertContains(self.client.get(reverse("web:order_page", args=[s.code])), "Orders open soon")
+        self.client.post(reverse("web:order_page", args=[s.code]), {"q_cheese_10": "1", "buyer_name": "X", "payment": "later"})
+        self.assertFalse(Order.objects.exists())
+        self.client.post(reverse("web:coordinator", args=[f.token]), {"action": "open"})
+        self.client.post(reverse("web:order_page", args=[s.code]), {"q_cheese_10": "1", "buyer_name": "X", "payment": "later", "website": ""})
+        self.assertEqual(Order.objects.count(), 1)

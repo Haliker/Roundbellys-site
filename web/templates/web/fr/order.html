@@ -18,7 +18,9 @@
 </section>
 
 <section class="wrap section">
-  {% if not f.taking_orders %}
+  {% if f.status == "setup" %}
+  <div class="callout"><h2 class="h3">Orders open soon.</h2><p>{{ f.group }}'s sale starts {{ f.sale_start|date:"F j" }}. Check back then, or ask {{ seller.first_name }}.</p></div>
+  {% elif not f.taking_orders %}
   <div class="callout"><h2 class="h3">This sale has ended.</h2><p>Thanks for supporting {{ f.group }}! Ask {{ seller.first_name }} about their next fundraiser.</p></div>
   {% else %}
   <p class="lede">Frozen, take-and-bake pizza made in our USDA-inspected kitchen in South Bend. {{ f.group }} keeps 40% of every pizza.{% if f.pickup_date %} Pizzas arrive {{ f.pickup_date|date:"l, F j" }}{% if f.pickup_place %} at {{ f.pickup_place }}{% endif %}{% if f.pickup_time %}, {{ f.pickup_time }}{% endif %}.{% endif %} Orders close {{ f.sale_end|date:"F j" }}.</p>

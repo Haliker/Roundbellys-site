@@ -261,7 +261,7 @@ def back(c, W, H, s):
     c.setFillColor(P.RED); c.setFont("Black", 10.5); c.drawString(L + 60, 50, "ORDERING ONLINE? SKIP THE FORM.")
     c.setFillColor(P.BROWN); c.setFont("Body", 9.3)
     c.drawString(L + 60, 37, f"Scan the code to order online. It's credited to {s['seller_first']} automatically.")
-    c.drawString(L + 60, 25, f"Sellers: add these orders on your seller page before {s['sale_end']}.  Order link: {s['url'].replace('https://', '')}")
+    c.drawString(L + 60, 25, f"Sellers: add these orders on your seller page before {s['sale_end']}.  Order link: {s['url'].replace('https://', '').replace('http://', '')}")
     c.setFont("BodyB", 10)
     c.drawRightString(R - 112, 46, "Total pizzas:"); c.setLineWidth(0.7); c.line(R - 106, 45, R, 45)
     c.drawRightString(R - 112, 26, "Cash/check collected: $"); c.line(R - 106, 25, R, 25)

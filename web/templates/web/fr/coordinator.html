@@ -30,7 +30,7 @@
     <div class="card">
       <h2 class="h3">Invite your sellers</h2>
       <p>Send this link to parents (email, text, team app). Each family signs up their seller and gets their own order link and flyer.</p>
-      <p class="linkbox"><a href="{{ join_link }}">{{ join_link }}</a></p>
+      <p class="linkbox"><a href="{{ join_link }}">{{ join_link|cut:"https://"|cut:"http://" }}</a></p>
       <button class="btn btn--yellow" type="button" data-copy="{{ join_link }}">Copy sign-up link</button>
     </div>
     <div class="card card--qr">
@@ -63,7 +63,7 @@
     </tbody>
   </table>
   </div>
-  {% if f.taking_orders %}
+  {% if f.can_join %}
   <details class="addnames">
     <summary>Add sellers yourself</summary>
     <form method="post">{% csrf_token %}<input type="hidden" name="action" value="add_sellers">
@@ -96,7 +96,7 @@
   </div>
 
   {% if f.status == "setup" %}
-  <form method="post" class="closebox">{% csrf_token %}<input type="hidden" name="action" value="open"><p>Ready to go? Opening the sale lets sellers start taking orders.</p><button class="btn btn--red" type="submit">Open the sale</button></form>
+  <form method="post" class="closebox">{% csrf_token %}<input type="hidden" name="action" value="open"><p>Sellers can sign up now. Orders start once you open the sale.</p><button class="btn btn--red" type="submit">Open the sale</button></form>
   {% elif f.status == "open" %}
   <form method="post" class="closebox">{% csrf_token %}<input type="hidden" name="action" value="close"><p>Orders close by themselves after {{ f.sale_end|date:"F j" }}. Done early? You can close the sale now.</p><button class="btn" type="submit">Close the sale now</button></form>
   {% endif %}

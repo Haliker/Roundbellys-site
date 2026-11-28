@@ -7,7 +7,7 @@
   <p class="frhead__group">Sale runs {{ f.sale_start|date:"F j" }} to {{ f.sale_end|date:"F j" }}.</p></div>
 </section>
 <section class="wrap section narrow">
-  {% if not f.taking_orders %}
+  {% if not f.can_join %}
   <div class="callout"><h2 class="h3">This sale has ended.</h2><p>Sign-ups are closed. Ask your coordinator about the next one.</p></div>
   {% else %}
   <p class="lede">Sign up your seller and you'll get their own order link, a flyer with their QR code, and a page to keep track of orders. A parent or guardian should fill this in.</p>
